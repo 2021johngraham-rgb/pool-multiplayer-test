@@ -44,7 +44,7 @@ function torus(){return geometry((tri)=>{let N=48,M=16,R=.12,r=.022;for(let i=0;
 
 let W=0,H=0,D=1,playing=false,paused=false,charging=false,power=0,aim=0,balls=[],dragY=0,dragRange=120,lastX=0,mouseX=innerWidth/2,mouseY=innerHeight*.5,last=performance.now(),hitFollow=0,messageTimer=0,group=null,gameOver=false,shots=0,currentShotBreak=false,stickHiddenUntilRest=false,activePlayer=1,playerGroups=[null,null,null],shotInProgress=false,keepTurnAfterShot=false,shotFoul=false,peer=null,peerConn=null,onlineConnected=false,networkHost=false,localPlayer=1,syncClock=0,tableOnly=false,demoStart=performance.now(),demoBalls=null,demoAim=0,demoBreak=false,demoCorner=false,demoStage=-1,demoFired=false;
 let eye=[0,7.8,.15],target=[0,.55,0],vp=identity(),viewMode=0,cameraUp=[0,1,0];const viewNames=['PLAYER','OVERHEAD','FOOT END','SIDE RAIL'];function resize(){W=innerWidth;H=innerHeight;D=Math.max(1,Math.min(4,gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)/Math.max(1,W,H)));canvas.width=W*D;canvas.height=H*D;labels.width=W*D;labels.height=H*D;lctx.setTransform(D,0,0,D,0,0);gl.viewport(0,0,canvas.width,canvas.height);let view=lookAt(eye,target,[0,1,0]),pr=perspective(53*Math.PI/180,canvas.width/canvas.height,.08,80);vp=mm(pr,view)}addEventListener('resize',resize);resize();gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.clearColor(.035,.06,.045,1);
-function draw(m,model,color,alpha=1){gl.uniform3fv(loc.eye,eye);gl.uniformMatrix4fv(loc.model,false,model);gl.uniformMatrix4fv(loc.mvp,false,mm(vp,model));gl.uniform3fv(loc.color,typeof color==='string'?rgb(color):color);gl.uniform1f(loc.alpha,alpha);if(alpha<.999){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);m.draw();gl.depthMask(true);gl.disable(gl.BLEND)}else m.draw()}
+function draw(m,model,color,alpha=1){gl.uniform3fv(loc.eye,eye);gl.uniformMatrix4fv(loc.model,false,model);gl.uniformMatrix4fv(loc.mvp,false,mm(vp,model));gl.uniform3fv(loc.color,typeof color==='string'?rgb(color):color);gl.uniform1f(loc.alpha,alpha);if(alpha<.999){gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);gl.disable(gl.DEPTH_TEST);m.draw();gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.BLEND)}else m.draw()}
 function box(x,y,z,sx,sy,sz,color){draw(cube,mm(tr(x,y,z),sc(sx,sy,sz)),color)}function fishShape(x,y,z,color,dir=1,size=.12){draw(cueSphere,mm(tr(x,y,z),sc(size*1.5,size*.68,size*.62)),color);draw(cube,mm(mm(tr(x-dir*size*.92,y,z),ry(dir>0?-.45:.45)),sc(size*.68,size*.92,.025)),color);draw(cueSphere,mm(tr(x+dir*size*.35,y+size*.12,z-size*.51),sc(size*.13,size*.13,.012)),'#fff4cf');draw(cueSphere,mm(tr(x+dir*size*.37,y+size*.12,z-size*.525),sc(size*.065,size*.065,.008)),'#102238')}
 function rx(a){let m=identity(),c=Math.cos(a),s=Math.sin(a);m[5]=c;m[6]=s;m[9]=-s;m[10]=c;return m}function cylinderAt(mesh,x,y,z,sx,sy,length,ang,color){let model=mm(mm(mm(tr(x,y,z),rx(-Math.PI/2)),ry(ang)),sc(sx,sy,length));draw(mesh,model,color)}
 function lineCylinder(a,b,r,color){let d=sub(b,a),len=Math.hypot(...d),ang=Math.atan2(d[0],d[2]);let model=mm(mm(mm(tr(...a),ry(ang)),sc(r,r,len)),identity());draw(cyl,model,color)}
@@ -59,13 +59,13 @@ if(aqu){
  // Low-poly reef and sea grass visible through the glass.
  for(let [x,z,w,h,col] of [[-.82,-1.42,.34,.13,'#526273'],[-.36,-1.18,.26,.18,'#344b61'],[.55,-1.46,.42,.12,'#46566a'],[.88,-.82,.25,.17,'#354c63'],[-.92,.15,.30,.15,'#526273'],[-.40,.52,.38,.12,'#3e5365'],[.42,.96,.34,.19,'#45576b'],[.86,1.42,.28,.12,'#344a60']])draw(cube,mm(mm(tr(x,.12,z),ry((x+z)*.7)),sc(w,h,.22)),col);
  for(let [x,z,ht] of [[-.72,-.72,.23],[-.28,.14,.30],[.63,.28,.25],[.76,1.14,.22]]){cylinderAt(cyl,x,.105+ht/2,z,.018,.018,ht,0,'#18766e');for(let q=0;q<3;q++)draw(cube,mm(mm(tr(x+(q-1)*.045,.16+q*.035,z),ry((q-1)*.38)),sc(.035,.12,.022)),'#24a77c')}
- fishShape(-.58,.18,-1.20,'#f18a53',1,.12);
- fishShape(.42,.18,-.48,'#ffd05a',-1,.105);
- fishShape(-.16,.18,.44,'#44c9d4',1,.13);
- fishShape(.66,.18,1.20,'#ef675d',-1,.12);
+ fishShape(-.58,.18,-1.20,'#ff8957',1,.18);
+ fishShape(.42,.18,-.48,'#ffdc62',-1,.16);
+ fishShape(-.16,.18,.44,'#43d9e8',1,.19);
+ fishShape(.66,.18,1.20,'#ff655d',-1,.17);
  // Cyan glass walls and bright edge reflections are translucent so the contents stay visible.
- for(let side of [-1,1]){draw(cube,mm(tr(side*1.145,.22,0),sc(.022,.58,3.62)),'#3caed4',.24);box(side*1.158,.39,0,.018,.60,3.66,'#168cc5');box(side*1.165,.39,-1.72,.012,.50,.012,'#a3efff');box(side*1.165,.39,1.72,.012,.50,.012,'#a3efff')}
- for(let end of [-1,1]){draw(cube,mm(tr(0,.22,end*1.815),sc(2.30,.58,.022)),'#3caed4',.24);box(0,.39,end*1.828,2.32,.60,.018,'#168cc5');box(-1.12,.39,end*1.837,.012,.50,.012,'#a3efff');box(1.12,.39,end*1.837,.012,.50,.012,'#a3efff')}
+ for(let side of [-1,1]){draw(cube,mm(tr(side*1.145,.22,0),sc(.022,.58,3.62)),'#52caff',.30);box(side*1.158,.39,0,.018,.60,3.66,'#168cc5');box(side*1.165,.39,-1.72,.012,.50,.012,'#a3efff');box(side*1.165,.39,1.72,.012,.50,.012,'#a3efff')}
+ for(let end of [-1,1]){draw(cube,mm(tr(0,.22,end*1.815),sc(2.30,.58,.022)),'#52caff',.30);box(0,.39,end*1.828,2.32,.60,.018,'#168cc5');box(-1.12,.39,end*1.837,.012,.50,.012,'#a3efff');box(1.12,.39,end*1.837,.012,.50,.012,'#a3efff')}
  for(let side of [-1,1])for(let end of [-1,1]){box(side*1.16,.68,end*1.82,.055,.035,.055,'#67eaff');box(side*1.16,.071,end*1.82,.05,.026,.05,'#1abaff')}
  box(0,.645,0,2.27,.008,3.55,'#42c9e5');
 } box(0,.76,0,2.4,.09,3.82,(aqu?'#252c86':'#927046'));box(0,.813,0,2.18,.025,3.58,(aqu?'#087fe9':'#18533e'));box(0,.829,-.36,2.04,.003,.009,'#ddcfaa');box(0,.831,.68,.035,.003,.035,'#ddcfaa');for(let z of [-1.2,-.6,0,.6,1.2])box(0,.595,z,2.4,.006,.009,(aqu?'#26cfff':'#76512f'));
