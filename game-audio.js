@@ -3,10 +3,10 @@
 (()=>{'use strict';
 class GameAudio{
  constructor(style,key){
-  this.style=style;this.key=key;this.ctx=null;this.bar=0;this.next=0;this.enabled=true;this.music=.55;this.effects=.80;this.cooldowns={};
+  this.style=style;this.key=key;this.ctx=null;this.enabled=true;this.music=.55;this.effects=.80;this.cooldowns={};
   try{let saved=JSON.parse(localStorage.getItem(key)||'null');if(saved){this.music=saved.music??.55;this.effects=saved.effects??.80;this.enabled=saved.enabled!==false}}catch(e){}
   const unlock=()=>this.unlock();addEventListener('pointerdown',unlock,{capture:true});addEventListener('keydown',unlock,{capture:true});
-  document.addEventListener('visibilitychange',()=>{if(!this.ctx)return;if(document.hidden)this.ctx.suspend();else if(this.started){this.ctx.resume();this.next=this.ctx.currentTime+.08}});
+  document.addEventListener('visibilitychange',()=>{if(!this.ctx)return;if(document.hidden)this.ctx.suspend();else if(this.started){this.ctx.resume()}});
  }
  unlock(){
   if(!this.ctx){let C=window.AudioContext||window.webkitAudioContext;if(!C)return;this.ctx=new C();this.master=this.ctx.createDynamicsCompressor();this.master.threshold.value=-12;this.master.knee.value=14;this.master.ratio.value=5;this.master.connect(this.ctx.destination);this.musicBus=this.ctx.createGain();this.fxBus=this.ctx.createGain();this.musicBus.connect(this.master);this.fxBus.connect(this.master);
@@ -43,14 +43,6 @@ class GameAudio{
   }catch(error){console.warn('Instrumental loop unavailable',error)}
  }
 
- schedule(){
-  if(!this.ctx||this.ctx.state!=='running'||document.hidden)return;
-  if(this.next<this.ctx.currentTime-.1)this.next=this.ctx.currentTime+.05;
-  while(this.next<this.ctx.currentTime+.25){let beat=60/(this.style==='rock'?94:106),at=this.next,b=this.bar++;
-   if(this.enabled&&this.music>0){if(this.style==='rock')this.rock(at,beat,b);else this.jazz(at,beat,b)}
-   this.next+=beat*4;
-  }
- }
  jazz(at,beat,bar){
   let roots=[48,45,50,43,48,57,50,55],midi=roots[bar%8],f=n=>440*Math.pow(2,(n-69)/12),voicing=bar%8===2?[3,7,10,14]:bar%8===3||bar%8===7?[4,7,10,14]:[3,7,10,14];
   for(let k=0;k<4;k++){this.tone(f(midi+[0,7,9,11][k]),at+k*beat,.38,.18,'triangle');this.noiseHit(at+k*beat,.13,.030,6900);this.tone(510,at+k*beat,.025,.012,'sine');this.noiseHit(at+k*beat+beat*.67,.06,.024,7300)}
