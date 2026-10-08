@@ -99,7 +99,7 @@ const V=(x,y,z)=>[x,y,z], add=(a,b)=>a.map((x,i)=>x+b[i]),sub=(a,b)=>a.map((x,i)
 function identity(){return new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1])}function multiplyInto(a,b,o){for(let c=0;c<16;c+=4){let x=b[c],y=b[c+1],z=b[c+2],w=b[c+3];o[c]=a[0]*x+a[4]*y+a[8]*z+a[12]*w;o[c+1]=a[1]*x+a[5]*y+a[9]*z+a[13]*w;o[c+2]=a[2]*x+a[6]*y+a[10]*z+a[14]*w;o[c+3]=a[3]*x+a[7]*y+a[11]*z+a[15]*w}return o}function mm(a,b){return multiplyInto(a,b,new Float32Array(16))}function tr(x,y,z){let m=identity();m[12]=x;m[13]=y;m[14]=z;return m}function sc(x,y,z){let m=identity();m[0]=x;m[5]=y;m[10]=z;return m}function ry(a){let m=identity(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[2]=-s;m[8]=s;m[10]=c;return m}function rz(a){let m=identity(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[1]=s;m[4]=-s;m[5]=c;return m}function perspective(fovy,aspect,near,far){let f=1/Math.tan(fovy/2),nf=1/(near-far),m=new Float32Array(16);m[0]=f/aspect;m[5]=f;m[10]=(far+near)*nf;m[11]=-1;m[14]=2*far*near*nf;return m}function lookAt(eye,target,up){let z=norm(sub(eye,target)),x=norm(cross(up,z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1])}
 
 function rx(a){let m=identity(),c=Math.cos(a),s=Math.sin(a);m[5]=c;m[6]=s;m[9]=-s;m[10]=c;return m}
-const vert="\nattribute float aRig;attribute vec3 aPosition;attribute vec3 aNormal;attribute vec3 aColor;attribute vec2 aUV;\nuniform mat4 uVP;uniform mat4 uModel;uniform float uStride;uniform float uStep;uniform mediump float uGear;uniform float uPose;uniform float uFacing;uniform float uAction;uniform float uActionAmount;uniform float uShoulder;uniform float uHeadTurn;\nvarying mediump vec3 vLocal;varying mediump vec3 vWorld;varying mediump vec3 vNormal;varying mediump vec3 vColor;varying mediump vec2 vUV;\nvec2 turn(vec2 q,float a){float c=cos(a),s=sin(a);return vec2(c*q.x-s*q.y,s*q.x+c*q.y);}\nvoid main(){\n vec3 p=aPosition,n=aNormal;vLocal=p;\n if(uGear>.5){\n  float stride=clamp(uStride,0.,1.),phase=uStep+(aRig==1.||aRig==3.||aRig==6.?0.:3.14159265),swing=sin(phase);\n  if(aRig==1.||aRig==2.){\n   float knee=max(0.,sin(phase+.35))*.92*stride*uFacing;\n   if(p.y<.47){p.yz=turn(p.yz-vec2(.47,0.),knee)+vec2(.47,0.);n.yz=turn(n.yz,knee);}\n   float hip=-swing*.60*stride*uFacing;if(uAction==5.&&aRig==2.)hip-=uActionAmount*1.1*uFacing;p.yz=turn(p.yz-vec2(.80,0.),hip)+vec2(.80,0.);n.yz=turn(n.yz,hip);\n  }else if(aRig==3.||aRig==4.||aRig==6.||aRig==7.){\n   float side=aRig==3.||aRig==6.?-1.:1.;\n   float actionAngle=0.,bend=0.;\n   if(uAction==4.){actionAngle=-2.95*uFacing*uActionAmount;bend=2.0*uActionAmount;}\n   if(uAction==6.&&side>0.){actionAngle=-1.85*uFacing*uActionAmount;bend=-.4*uActionAmount;}\n   if(uAction==7.||uAction==8.){actionAngle=-1.05*uFacing*uActionAmount;}\n   if(uAction==1.){actionAngle=-.45*uFacing*uActionAmount;}\n   if(aRig==6.||aRig==7.){float elbow=(swing*.12*stride+bend)*uFacing;vec2 pivot=vec2(uShoulder-.30,-.03*uFacing);p.yz=turn(p.yz-pivot,elbow)+pivot;n.yz=turn(n.yz,elbow);}\n   float arm=(uPose<.5?swing*.40*stride*uFacing:0.)+actionAngle;\n   p.yz=turn(p.yz-vec2(uShoulder,0.),arm)+vec2(uShoulder,0.);n.yz=turn(n.yz,arm);\n  }else if(aRig==5.){p.xz=turn(p.xz,uHeadTurn);n.xz=turn(n.xz,uHeadTurn);}\n  float bob=(1.-cos(uStep*2.))*.012*stride;p.y+=bob;\n }\n vWorld=(uModel*vec4(p,1.)).xyz;vNormal=mat3(uModel)*n;vColor=aColor;vUV=aUV;gl_Position=uVP*vec4(vWorld,1.);\n}";
+const vert="\nattribute float aRig;attribute vec3 aPosition;attribute vec3 aNormal;attribute vec3 aColor;attribute vec2 aUV;\nuniform mat4 uVP;uniform mat4 uModel;uniform float uStride;uniform float uStep;uniform mediump float uGear;uniform float uPose;uniform float uFacing;uniform float uAction;uniform float uActionAmount;uniform float uShoulder;uniform float uHeadTurn;\nvarying mediump vec3 vLocal;varying mediump vec3 vWorld;varying mediump vec3 vNormal;varying mediump vec3 vColor;varying mediump vec2 vUV;\nfloat sideStep(float rig){return rig==1.?-1.:1.;}\nvec2 turn(vec2 q,float a){float c=cos(a),s=sin(a);return vec2(c*q.x-s*q.y,s*q.x+c*q.y);}\nvoid main(){\n vec3 p=aPosition,n=aNormal;vLocal=p;\n if(uGear>.5){\n  float stride=clamp(uStride,0.,1.),phase=uStep+(aRig==1.||aRig==3.||aRig==6.?0.:3.14159265),swing=sin(phase);\n  if(aRig==1.||aRig==2.){\n   float knee=max(0.,sin(phase+.35))*.92*stride*uFacing;\n   if(p.y<.47){p.yz=turn(p.yz-vec2(.47,0.),knee)+vec2(.47,0.);n.yz=turn(n.yz,knee);}\n   float hip=-swing*.60*stride*uFacing;if(uAction==1.)hip-=.20*uFacing*uActionAmount;if(uAction==9.)hip-=.38*uFacing*uActionAmount;if(uAction==11.){hip+=sideStep(aRig)*uActionAmount*.18;p.x+=sideStep(aRig)*.06*uActionAmount;}if(uAction==5.&&aRig==2.)hip-=uActionAmount*1.1*uFacing;p.yz=turn(p.yz-vec2(.80,0.),hip)+vec2(.80,0.);n.yz=turn(n.yz,hip);\n  }else if(aRig==3.||aRig==4.||aRig==6.||aRig==7.){\n   float side=aRig==3.||aRig==6.?-1.:1.;\n   float actionAngle=0.,bend=0.;\n   if(uAction==4.){actionAngle=-2.95*uFacing*uActionAmount;bend=2.0*uActionAmount;}\n   if(uAction==6.&&side>0.){actionAngle=-1.85*uFacing*uActionAmount;bend=-.4*uActionAmount;}\n   if(uAction==7.||uAction==8.){actionAngle=-1.05*uFacing*uActionAmount;}\n   if(uAction==1.){actionAngle=(side>0.?-1.12:-.45)*uFacing*uActionAmount;bend=.62*uActionAmount;}\n   if(uAction==9.){actionAngle=-1.30*uFacing*uActionAmount;bend=.95*uActionAmount;}\n   if(uAction==10.){actionAngle=-1.75*uFacing*uActionAmount;bend=.20*uActionAmount;}\n   if(uAction==11.){actionAngle=(side>0.?-.85:.45)*uFacing*uActionAmount;bend=.60*uActionAmount;}\n   if(aRig==6.||aRig==7.){float elbow=(swing*.12*stride+bend)*uFacing;vec2 pivot=vec2(uShoulder-.30,-.03*uFacing);p.yz=turn(p.yz-pivot,elbow)+pivot;n.yz=turn(n.yz,elbow);}\n   float arm=(uPose<.5?swing*.40*stride*uFacing:0.)+actionAngle;\n   p.yz=turn(p.yz-vec2(uShoulder,0.),arm)+vec2(uShoulder,0.);n.yz=turn(n.yz,arm);\n  }else if(aRig==5.){p.xz=turn(p.xz,uHeadTurn);n.xz=turn(n.xz,uHeadTurn);}\n  float bob=(1.-cos(uStep*2.))*.012*stride;p.y+=bob;if(uAction==1.||uAction==9.)p.y-=.055*uActionAmount;if(uAction==10.&&aRig==5.){p.yz=turn(p.yz-vec2(1.5,0.),-.20*uActionAmount*uFacing)+vec2(1.5,0.);n.yz=turn(n.yz,-.20*uActionAmount*uFacing);}\n }\n vWorld=(uModel*vec4(p,1.)).xyz;vNormal=mat3(uModel)*n;vColor=aColor;vUV=aUV;gl_Position=uVP*vec4(vWorld,1.);\n}";
 const frag="\nprecision mediump float;\nuniform vec3 uEye;uniform vec3 uSky;uniform float uMood;uniform float uMat;uniform float uTime;uniform mediump float uGear;\nuniform sampler2D uTexture;uniform sampler2D uGearTexture;\nvarying mediump vec3 vWorld;varying mediump vec3 vLocal;varying mediump vec3 vNormal;varying mediump vec3 vColor;varying mediump vec2 vUV;\nfloat hash(vec2 q){return fract(sin(dot(q,vec2(12.9898,78.233)))*43758.5453);}\nvoid main(){\n if(uMat>3.5){float r=length(vec2(vLocal.x/.53,vLocal.z/.37));gl_FragColor=vec4(.012,.022,.030,(1.-smoothstep(.28,1.,r))*.26);return;}\n vec3 n=normalize(vNormal),light=normalize(vec3(-.6,.8,-.4)),view=normalize(uEye-vWorld),halfway=normalize(light+view);\n float lit=.48+abs(dot(n,light))*.46;vec3 warm=mix(vec3(1.,.98,.91),vec3(1.,.83,.63),uMood);vec3 c=vColor*lit*warm;\n if(uGear>.5){\n  float material=abs(vUV.x),diff=max(dot(n,light),0.),rim=pow(1.-max(dot(n,view),0.),3.);\n  vec3 base=vColor;if(vUV.x>=0.){base=texture2D(uGearTexture,vUV).rgb;material=3.;}\n  float shine=material<1.5?72.:material<2.5?110.:material<3.5?8.:material<4.5?92.:material<5.5?15.:material<6.5?24.:38.;\n  float amount=material<1.5?.52:material<2.5?.72:material<3.5?.055:material<4.5?.82:material<5.5?.09:material<6.5?.16:.21;\n  c=base*(.57+diff*.42)*warm;\n  if(material>2.5&&material<3.5){float weave=sin(vLocal.x*450.)*sin(vLocal.y*460.);c*=.985+weave*.022;}\n  if(material>6.5){float grain=hash(floor(vLocal.xz*260.));c*=.97+grain*.055;}\n  c+=vec3(1.,.96,.85)*pow(max(dot(n,halfway),0.),shine)*amount;\n  c+=vec3(.36,.59,.75)*rim*(material<2.5?.18:.075);\n  float ao=.93+.07*smoothstep(.15,1.2,vLocal.y);c*=ao;\n }else{\n  if(uMat>.5&&uMat<1.5){vec2 uv=vec2(vWorld.x/48.768+.5,vWorld.z/109.728+.5);c=texture2D(uTexture,uv).rgb;float fleck=hash(floor(vWorld.xz*110.));c*=.94+fleck*.095;c*=.84+abs(dot(n,light))*.16;}\n  if(uMat>1.5&&uMat<2.5)c=texture2D(uTexture,vUV).rgb;\n  if(uMat>2.5){float h=max(0.,normalize(vWorld).y);c=mix(uSky+vec3(.17,.15,.11),uSky,h*.85);float cloud=sin(vWorld.x*.015+uTime*.012)*sin(vWorld.z*.011-uTime*.008);c+=vec3(.075)*smoothstep(.42,.88,cloud)*smoothstep(.16,.6,h);}\n }\n if(uMat<2.5){float fog=smoothstep(130.,330.,length(uEye-vWorld));c=mix(c,uSky,fog*.65);}\n gl_FragColor=vec4(c,1.);\n}\n";
 function shader(t,s){let x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(x));return x}const prog=gl.createProgram();gl.attachShader(prog,shader(gl.VERTEX_SHADER,vert));gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,frag));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);const loc={};for(let [k,v]of Object.entries({rig:'aRig',p:'aPosition',n:'aNormal',c:'aColor',uv:'aUV'}))loc[k]=gl.getAttribLocation(prog,v);for(let [k,v]of Object.entries({action:'uAction',amount:'uActionAmount',shoulder:'uShoulder',headTurn:'uHeadTurn',gear:'uGear',pose:'uPose',facing:'uFacing',gearTexture:'uGearTexture',model:'uModel',stride:'uStride',step:'uStep',vp:'uVP',eye:'uEye',sky:'uSky',mood:'uMood',mat:'uMat',time:'uTime',texture:'uTexture'}))loc[k]=gl.getUniformLocation(prog,v);
 
@@ -499,7 +499,7 @@ function prepareDown(){
  if(!formationPlayers.length)buildFormation(selectedOffense.formation);
  sprintToggle=false;document.querySelector('#sprintButton').setAttribute('aria-pressed','false');
  document.querySelector('#downResult').classList.add('hidden');nextDownAction=null;document.body.classList.add('playing');gamePhase='ready';playClock=25;liveTime=0;flight=null;looseBall=null;throwHeld=0;catchCooldown=0;resultText='';deadTime=0;
- for(let p of formationPlayers){p.z+=lineOfScrimmage;p.startX=p.x;p.startZ=p.z;p.vx=0;p.vz=0;p.heading=0;p.catchUntil=0;p.throwUntil=0;p.blockedUntil=0;p.routeIndex=0;p.contactTime=0;p.stamina=1;p.stunnedUntil=0;p.tackleCooldown=0;p.breaks=0;p.tackleGrace=0;p.fallenAt=-1;p.engagedUntil=0;p.blockTarget=null;p.blockMode=null;p.blockedBy=null;p.blockRelease=0;p.blockCooldown=0;p.blockSerial=0;p.motionHistory=[];p.animPhase=0;p.animBlend=0;p.jumpStart=-99;p.diveUntil=0;p.tackleUntil=0;p.truckUntil=0;p.jukeUntil=0;p.skillCooldown=0;p.actionStart=-99;p.routeBreakSerial=0;p.lastSeenBreak=0;p.turnRecoveryUntil=0;p.ballHawk=false;p.ballReadAt=0;p.lastBallChance=false;
+ for(let p of formationPlayers){p.z+=lineOfScrimmage;p.startX=p.x;p.startZ=p.z;p.vx=0;p.vz=0;p.heading=0;p.catchUntil=0;p.throwUntil=0;p.blockedUntil=0;p.routeIndex=0;p.contactTime=0;p.stamina=1;p.stunnedUntil=0;p.tackleCooldown=0;p.breaks=0;p.tackleGrace=0;p.fallenAt=-1;p.engagedUntil=0;p.blockTarget=null;p.blockMode=null;p.blockedBy=null;p.blockRelease=0;p.blockCooldown=0;p.blockSerial=0;p.motionHistory=[];p.animPhase=0;p.animBlend=0;p.jumpStart=-99;p.diveUntil=0;p.tackleUntil=0;p.truckUntil=0;p.jukeUntil=0;p.skillCooldown=0;p.actionStart=-99;p.bigHitUntil=0;p.bigHitConnected=false;p.hitRecoverUntil=0;p.impactStart=-99;p.impactVX=p.impactVZ=p.impactStrength=0;p.impactBack=false;p.hitReactUntil=0;p.stumbleUntil=0;p.jukeVictims=[];p.routeBreakSerial=0;p.lastSeenBreak=0;p.turnRecoveryUntil=0;p.ballHawk=false;p.ballReadAt=0;p.lastBallChance=false;
   let wide=['WR','SL'].includes(p.role),corner=p.role==='CB';p.maxSpeed=p.team==='offense'?(wide?7.0+Math.random()*.65:p.role==='RB'?7.0:p.role==='QB'?6.1:['LT','LG','C','RG','RT'].includes(p.role)?5.7:6.5):(corner?7.0+Math.random()*.65:['SS','FS'].includes(p.role)?6.9:6.5);p.moveAccel=p.team==='offense'?(wide?11.5+Math.random()*2.5:11):(corner?11.5+Math.random()*2.5:10.5);p.routeSkill=.45+Math.random()*.45;p.coverageSkill=.45+Math.random()*.45;p.reactDelay=.08+(1-p.coverageSkill)*.22;p.leverage=(Math.random()<.5?-1:1)*(.25+Math.random()*.55);p.coveragePhase=Math.random()*Math.PI*2;p.blockStrength=['LT','LG','C','RG','RT'].includes(p.role)?.75+Math.random()*.23:.4+Math.random()*.28;p.rushStrength=['DE','DT'].includes(p.role)?.65+Math.random()*.3:.45+Math.random()*.3;
   let route=selectedOffense.routes.find(r=>r[0]===p.number);p.route=p.team==='offense'&&route?route[1].map(q=>[Math.max(-23,Math.min(23,q[0])),Math.max(-53,Math.min(49,q[1]+lineOfScrimmage))]):null;
  }
@@ -530,7 +530,7 @@ function advanceFootball(dt){
 }
 function moveVelocity(p,vx,vz,dt){
  if(p.stunnedUntil>liveTime||(p.diveRecoverUntil>liveTime&&p.diveUntil<=liveTime)){vx=0;vz=0}
- if(p.diveUntil>liveTime){vx=p.diveVX;vz=p.diveVZ}
+ if(p.diveUntil>liveTime){vx=p.diveVX;vz=p.diveVZ}else if(p.bigHitUntil>liveTime){vx=p.bigHitVX;vz=p.bigHitVZ}else if(p.hitRecoverUntil>liveTime){vx=0;vz=0}else if(p.jukeUntil>liveTime){let cut=Math.sin(Math.PI*Math.max(0,Math.min(1,(liveTime-p.actionStart)/.5)));vx+=(p.jukeWX||0)*cut*4.5;vz+=(p.jukeWZ||0)*cut*4.5}
  let top=p.maxSpeed||6.6,desired=Math.hypot(vx,vz);if(desired>top*1.08&&!(p.diveUntil>liveTime)){vx*=top*1.08/desired;vz*=top*1.08/desired}
  let rate=p.engagedUntil>liveTime?7:(p.moveAccel||12),dx=vx-(p.vx||0),dz=vz-(p.vz||0),l=Math.hypot(dx,dz),max=rate*dt;if(l>max){dx*=max/l;dz*=max/l}
  p.vx=(p.vx||0)+dx;p.vz=(p.vz||0)+dz;p.x+=p.vx*dt;p.z+=p.vz*dt;
@@ -552,24 +552,41 @@ function playerInput(p,dt){
  let sprint=(keys.has('ShiftLeft')||keys.has('ShiftRight')||sprintToggle)&&(p.stamina||0)>.10;
  p.stamina=Math.max(0,Math.min(1,(p.stamina||0)+(sprint&&l?-.16:.23)*dt));p.sprinting=sprint&&l>0;
  let speed=(p.maxSpeed||6.6)*(sprint?1:.76);if(p.engagedUntil>liveTime)speed*=.48;if(p.truckUntil>liveTime)speed*=1.02;
- if(p.jukeUntil>liveTime){let t=1-(p.jukeUntil-liveTime)/.5;dx+=(p.jukeSide||1)*Math.sin(Math.PI*t)*1.2;l=Math.hypot(dx,dz)}
+ 
  moveVelocity(p,l?dx/l*speed:0,l?dz/l*speed:0,dt);
+}
+function contactProfile(p){
+ let masses={LT:140,LG:142,C:138,RG:142,RT:140,DT:145,DE:124,LB:112,TE:118,FB:113,RB:99,QB:103,WR:88,SL:86,CB:87,SS:97,FS:94};
+ return {mass:(masses[p.role]||100)+((p.number*7)%9-4),agility:['WR','SL','CB','RB'].includes(p.role)?.90:['SS','FS','QB'].includes(p.role)?.76:['TE','LB','FB'].includes(p.role)?.65:.42};
+}
+function contactFacing(p,x,z){let speed=Math.hypot(p.vx||0,p.vz||0),h=(p.heading||0)+(p.team==='defense'?Math.PI:0),fx=speed>.5?p.vx/speed:Math.sin(h),fz=speed>.5?p.vz/speed:Math.cos(h),distance=Math.hypot(x-p.x,z-p.z)||1;return (fx*(x-p.x)+fz*(z-p.z))/distance}
+function markImpact(p,vx,vz,strength,backward=false){p.bigHitUntil=0;p.jukeUntil=0;p.truckUntil=0;p.diveUntil=0;p.impactStart=liveTime;p.impactVX=vx;p.impactVZ=vz;p.impactStrength=strength;p.impactBack=backward;p.hitReactUntil=liveTime+.85}
+function applyJukePressure(runner,defense){
+ if(runner.jukeUntil<=liveTime||liveTime-runner.actionStart<.08||liveTime-runner.actionStart>.38)return;
+ let victims=runner.jukeVictims||(runner.jukeVictims=[]),profile=contactProfile(runner);
+ for(let d of defense){let distance=Math.hypot(d.x-runner.x,d.z-runner.z);if(distance>2.8||distance<.45||d.stunnedUntil>liveTime||victims.includes(d.number))continue;
+  let facing=contactFacing(d,runner.x,runner.z);if(facing<.25)continue;victims.push(d.number);
+  let defender=contactProfile(d),commit=Math.min(1,Math.hypot(d.vx||0,d.vz||0)/6.5),side=((d.vx||0)*runner.jukeWX+(d.vz||0)*runner.jukeWZ)/6.5;
+  let chance=Math.max(.10,Math.min(.80,.27+(profile.agility-defender.agility)*.35+commit*.27+(1-(d.coverageSkill??.6))*.22-Math.max(0,side)*.20-(distance-1)*.10));
+  if(Math.random()<chance){d.vx-=runner.jukeWX*(1.2+commit);d.vz-=runner.jukeWZ*(1.2+commit);d.stunnedUntil=liveTime+.16+(1-defender.agility)*.26;d.turnRecoveryUntil=liveTime+.55;d.stumbleStart=liveTime;d.stumbleUntil=liveTime+.65;d.stumbleSide=runner.jukeSide;d.tackleCooldown=liveTime+.35;footballMessage('JUKE! '+d.role+' #'+d.number+' bites on the cut.')}
+ }
 }
 function tryTackle(tackler,runner){
  if(gamePhase!=='live'||tackler.stunnedUntil>liveTime||tackler.tackleCooldown>liveTime||runner.tackleGrace>liveTime)return;
- let dist=Math.hypot(tackler.x-runner.x,tackler.z-runner.z),manual=tackler.tackleUntil>liveTime||tackler.diveUntil>liveTime;
+ let dist=Math.hypot(tackler.x-runner.x,tackler.z-runner.z),big=tackler.bigHitUntil>liveTime,manual=big||tackler.tackleUntil>liveTime||tackler.diveUntil>liveTime;
+ if(big&&(liveTime-tackler.actionStart<.12||contactFacing(tackler,runner.x,runner.z)<.42||dist>1.35))return;
  if((tackler===controlled&&playSide==='defense'||netMode&&netHost&&tackler===remoteControlledPlayer())&&!manual&&dist>.65)return;
- tackler.tackleCooldown=liveTime+1.05;footballSound('hit',Math.min(1,.5+Math.hypot(runner.vx||0,runner.vz||0)/12));
- let speed=Math.hypot(runner.vx||0,runner.vz||0),dx=runner.x-tackler.x,dz=runner.z-tackler.z,l=Math.hypot(dx,dz)||1,truck=runner.truckUntil>liveTime;
- let chance=runner.role==='QB'?.04:Math.min(.34,.10+speed*.015+(runner.stamina||0)*.07+(runner.jukeUntil>liveTime?.28:0));
- if(truck)chance=.68;if(manual&&!truck)chance*=.72;
- if(runner.breaks<2&&Math.random()<chance){
-  runner.breaks++;runner.tackleGrace=liveTime+.55;tackler.stunnedUntil=liveTime+.95;tackler.fallenAt=liveTime;tackler.fallHeading=tackler.heading||0;
-  tackler.vx=-dx/l*2; tackler.vz=-dz/l*2;runner.vx+=dx/l*.9;runner.vz+=dz/l*.9;footballMessage(truck?'TRUCK! The runner powers through.':'Broken tackle · Keep moving!');return;
- }
- if(!twoPointAttempt&&!truck&&Math.random()<.035&&liveTime>.8){fumbleFootball(runner,tackler);return}
- runner.fallenAt=tackler.fallenAt=liveTime;runner.stunnedUntil=liveTime+2;tackler.stunnedUntil=liveTime+1.2;runner.fallHeading=runner.heading||0;tackler.fallHeading=tackler.heading||0;
- runner.vx=runner.vz=tackler.vx=tackler.vz=0;finishDown(runner.role==='QB'?'Sacked by #'+tackler.number:'Tackled by #'+tackler.number);
+ let a=contactProfile(runner),b=contactProfile(tackler),speed=Math.hypot(runner.vx||0,runner.vz||0),dx=runner.x-tackler.x,dz=runner.z-tackler.z,l=dist||1,nx=dx/l,nz=dz/l;
+ let front=contactFacing(runner,tackler.x,tackler.z),brace=Math.max(0,contactFacing(tackler,runner.x,runner.z)),closing=Math.max(0,((tackler.vx||0)-(runner.vx||0))*nx+((tackler.vz||0)-(runner.vz||0))*nz),truck=runner.truckUntil>liveTime&&front>.48;
+ tackler.tackleCooldown=liveTime+1.05;footballSound('hit',big?1:Math.min(1,.45+closing/15));
+ let chance=runner.role==='QB'?.035:Math.max(.03,Math.min(.45,.09+(a.mass/b.mass-1)*.22+speed*.012+(runner.stamina||0)*.055+(runner.jukeUntil>liveTime?.13:0)+(1-brace)*.10));
+ if(truck){let drive=a.mass*(2.5+speed*.55)*(front+.30),resist=b.mass*(2.7+Math.hypot(tackler.vx||0,tackler.vz||0)*.35)*(brace+.65);chance=Math.max(.12,Math.min(.86,.43+(drive/resist-1)*.40))}
+ if(big)chance=truck?chance*.40:0;else if(manual)chance*=.78;
+ if(runner.breaks<2&&Math.random()<chance){runner.breaks++;runner.tackleGrace=liveTime+.48;tackler.stunnedUntil=liveTime+(truck?1.2:.7);tackler.fallenAt=liveTime;tackler.fallHeading=tackler.heading||0;markImpact(tackler,-nx,-nz,truck?.68:.28,true);tackler.vx=-nx*2;tackler.vz=-nz*2;runner.vx-=nx*.8;runner.vz-=nz*.8;runner.truckImpactUntil=liveTime+.35;footballMessage(truck?'TRUCK! Shoulder through '+tackler.role+' #'+tackler.number+'.':'Broken tackle · Keep moving!');return}
+ if(!twoPointAttempt&&!truck&&Math.random()<(big?.11:.025)&&liveTime>.8){markImpact(runner,nx,nz,big?.9:.3,true);runner.fallenAt=liveTime;runner.stunnedUntil=liveTime+.9;fumbleFootball(runner,tackler);return}
+ runner.fallenAt=tackler.fallenAt=liveTime;runner.stunnedUntil=liveTime+2;tackler.stunnedUntil=liveTime+(big?.65:1.2);runner.fallHeading=runner.heading||0;tackler.fallHeading=tackler.heading||0;
+ markImpact(runner,nx,nz,big?Math.min(1.4,.75+closing*.05):.22,big);markImpact(tackler,nx,nz,big?.22:.12,false);tackler.bigHitConnected=big;
+ runner.vx=runner.vz=tackler.vx=tackler.vz=0;finishDown(big?'BIG HIT! '+tackler.role+' #'+tackler.number+' lays out #'+runner.number:runner.role==='QB'?'Sacked by #'+tackler.number:'Tackled by #'+tackler.number);
 }
 function solvePlayerContact(offense,defense,dt){
  for(let a=0;a<formationPlayers.length;a++)for(let b=a+1;b<formationPlayers.length;b++){
@@ -863,7 +880,7 @@ function stepFootball(dt){
   if(candidates.length){candidates.sort((a,b)=>{let sep=p=>Math.min(...defense.map(d=>Math.hypot(d.x-p.x,d.z-p.z)));return sep(b)-sep(a)});let p=candidates[0];launchPass(qb,p,Math.max(.65,Math.min(1.5,Math.hypot(p.x-qb.x,p.z-qb.z)/29)))}
  }
 
- recordReceiverMotion(offense);
+ recordReceiverMotion(offense);if(carrier?.team==='offense')applyJukePressure(carrier,defense);
  let reacting=flight?defense.filter(d=>d.ballHawk).sort((a,b)=>Math.hypot(a.x-flight.x1,a.z-flight.z1)-Math.hypot(b.x-flight.x1,b.z-flight.z1)).slice(0,3):[];
  for(let d of defense){
   if(d===controlled||(netMode&&d===remoteControlledPlayer()))continue;
@@ -901,7 +918,7 @@ function stepFootball(dt){
  if(carrier&&Math.abs(carrier.x)<24.384&&(carrier.team==='offense'?carrier.z+.22>=45.72:carrier.z-.22<=-45.72)){finishDown('Touchdown');return}
  if(carrier&&liveTime>.75){
   let enemies=carrier.team==='offense'?defense:offense,nearest=enemies.filter(p=>p.stunnedUntil<=liveTime&&p.blockedUntil<=liveTime&&p.tackleCooldown<=liveTime).sort((a,b)=>Math.hypot(a.x-carrier.x,a.z-carrier.z)-Math.hypot(b.x-carrier.x,b.z-carrier.z))[0];
-  if(nearest&&Math.hypot(nearest.x-carrier.x,nearest.z-carrier.z)<(nearest.diveUntil>liveTime?1.6:nearest.tackleUntil>liveTime?1.35:.95))tryTackle(nearest,carrier);
+  if(nearest&&Math.hypot(nearest.x-carrier.x,nearest.z-carrier.z)<(nearest.diveUntil>liveTime?1.6:nearest.bigHitUntil>liveTime||nearest.tackleUntil>liveTime?1.35:.95))tryTackle(nearest,carrier);
   if(gamePhase==='live'){if(Math.abs(carrier.x)>24)finishDown('Out of bounds');else if(carrier.z>=45.72)finishDown('Touchdown');else if(carrier.z<=-45.72){addPoints(otherTeam(offenseTeam),2);finishDown('Safety',true)}}
  }
  if(liveTime>22)finishDown('Play whistled dead');
@@ -915,14 +932,19 @@ function drawFootball(now){
   let visual=playerVisualState(p,frameDt),jump=playerJumpHeight(p),speed=Math.hypot(p.vx||0,p.vz||0),dir=p.team==='offense'?1:-1;
   let fallen=p.fallenAt>=0&&((p.stunnedUntil>liveTime)||gamePhase==='dead'),fall=fallen?smooth01(Math.min(1,(liveTime-p.fallenAt)/.48)):0;
   let diving=p.diveUntil>liveTime||p.diveRecoverUntil>liveTime,dive=diving?Math.sin(Math.min(1,Math.max(0,(liveTime-(p.actionStart||0))/1.1))*Math.PI):0;
-  let juke=p.jukeUntil>liveTime?Math.sin(Math.PI*(1-(p.jukeUntil-liveTime)/.5)):0,truck=p.truckUntil>liveTime;
+  let juke=p.jukeUntil>liveTime?Math.sin(Math.PI*Math.min(1,Math.max(0,(liveTime-p.actionStart)/.5))):0,truck=p.truckUntil>liveTime;
+  let truckPhase=truck?Math.min(1,Math.max(0,(liveTime-p.actionStart)/.65)):0,truckAmount=truck?Math.min(1,truckPhase/.18)*(1-smooth01(Math.max(0,(truckPhase-.72)/.28))):0;
+  let bigHit=p.bigHitUntil>liveTime,bigPhase=bigHit?Math.min(1,Math.max(0,(liveTime-p.actionStart)/.52)):0,bigAmount=bigHit?Math.sin(Math.PI*bigPhase)*.7+.25:0;
+  let impactAge=liveTime-(p.impactStart??-99),impact=impactAge>=0&&impactAge<2.5?(1-Math.exp(-impactAge*6))*(1-smooth01(Math.max(0,(impactAge-1.1)/1.4))):0,hitReact=p.hitReactUntil>liveTime?Math.sin(Math.PI*Math.min(1,Math.max(0,impactAge/.85))):0;
+  let stumble=p.stumbleUntil>liveTime?Math.sin(Math.PI*Math.min(1,Math.max(0,(liveTime-p.stumbleStart)/.65))):0;
   let throwAmount=p.throwUntil>liveTime?Math.sin(Math.PI*Math.min(1,(liveTime-(p.throwStart??liveTime))/.55)):0;
   let catchAmount=jump>.01?Math.sin(Math.PI*Math.min(1,(liveTime-(p.jumpStart??-99))/.85)):0;
   let block=p.blockingUntil>liveTime;
   let kicking=p.kickoffRole==='kicker'&&['kickoff-air','punt-air'].includes(gamePhase)&&liveTime<.8,kickAmount=kicking?Math.sin(Math.PI*liveTime/.8):0;
-  let action=catchAmount>0?4:throwAmount>0?6:kicking?5:block?7:truck?1:p.tackleUntil>liveTime?8:0,amount=catchAmount||throwAmount||kickAmount||(block?.8:truck?.85:action===8?.9:0);
-  let lean=dir*(fall*1.48+dive*1.38+(truck?.25:Math.min(.13,speed*.018))),roll=-juke*(p.jukeSide||1)*.24;
-  let model=mm(tr(visual.x,(.75-.50*Math.max(fall,dive))+jump,visual.z),mm(ry(visual.heading),mm(rz(roll),mm(rx(lean),tr(0,-.75,0)))));
+  let action=hitReact>0?10:bigHit?9:catchAmount>0?4:throwAmount>0?6:kicking?5:block?7:truck?1:juke>0?11:p.tackleUntil>liveTime?8:0,amount=hitReact||bigAmount||catchAmount||throwAmount||kickAmount||(block?.8:truck?truckAmount:juke>0?juke:action===8?.9:0);
+  let lean=dir*(fall*(p.impactBack?-1.48:1.48)+dive*1.38+truckAmount*.43+bigAmount*.62+Math.min(.13,speed*.018)),roll=-juke*(p.jukeSide||1)*.36+stumble*(p.stumbleSide||1)*.30;
+  let cutYaw=-juke*(p.jukeSide||1)*.38,drop=truckAmount*.10+bigAmount*.17+juke*.08,knockX=(p.impactVX||0)*(p.impactStrength||0)*impact,knockZ=(p.impactVZ||0)*(p.impactStrength||0)*impact;
+  let model=mm(tr(visual.x+knockX,(.75-.50*Math.max(fall,dive))+jump-drop,visual.z+knockZ),mm(ry(visual.heading+cutYaw),mm(rz(roll),mm(rx(lean),tr(0,-.75,0)))));
   let carryPose=p===carrier&&p.role!=='QB'&&!fallen?'carry':'normal',far=view!=='player'||controlled&&Math.hypot(p.x-controlled.x,p.z-controlled.z)>17;
   let mesh=modelFor(p,carryPose,far?'far':'game');gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,mesh.kitTexture);gl.activeTexture(gl.TEXTURE0);
   let headGoal=gameBall?Math.atan2(gameBall.x-p.x,gameBall.z-p.z)+(dir<0?Math.PI:0):visual.heading,headTurn=Math.max(-.55,Math.min(.55,Math.atan2(Math.sin(headGoal-visual.heading),Math.cos(headGoal-visual.heading))));
@@ -1328,7 +1350,7 @@ function handleRemoteCommand(m){
 }
 function sendQuarterbackSnapshot(){
  if(!netHost||!netConn?.open||appPhase!=='game')return;
- sendNet({type:'state',players:formationPlayers.map(p=>{let out={};for(let k of ['team','role','number','x','z','vx','vz','heading','catchUntil','throwUntil','throwStart','fallenAt','stunnedUntil','engagedUntil','stamina','maxSpeed','route','routeIndex','startX','startZ','animPhase','animBlend','sprinting','jumpStart','diveUntil','diveRecoverUntil','tackleUntil','truckUntil','jukeUntil','jukeSide','skillCooldown','actionStart','blockingUntil','kickoffRole','kickStart'])if(p[k]!==undefined)out[k]=p[k];return out}),timeouts:teamTimeouts,clockRunning:gameClockRunning,timeoutActive:timeoutInEffect,venue:homeVenue,offenseTeam,phase:gamePhase,clock:playClock,time:liveTime,quarter:quarterNumber,seconds:quarterSeconds,scores:[homeScore,awayScore],los:lineOfScrimmage,first:firstDownZ,down:downNumber,carrier:carrier?{team:carrier.team,number:carrier.number}:null,ball:gameBall,flight,loose:looseBall,kickoff:kickoffActive,punt:puntActive,kickMeter,extra:extraPending,pendingKickTeam,two:twoPointAttempt,over:gameOver,offense:selectedOffense.id,defense:selectedDefense.id,choosing:networkChoosing,notice:qbEl('playNotice').textContent,result:{visible:!qbEl('downResult').classList.contains('hidden'),title:qbEl('resultTitle').textContent,detail:qbEl('resultDetail').textContent}});
+ sendNet({type:'state',players:formationPlayers.map(p=>{let out={};for(let k of ['team','role','number','x','z','vx','vz','heading','catchUntil','throwUntil','throwStart','fallenAt','stunnedUntil','engagedUntil','stamina','maxSpeed','route','routeIndex','startX','startZ','animPhase','animBlend','sprinting','jumpStart','diveUntil','diveRecoverUntil','tackleUntil','truckUntil','jukeUntil','jukeSide','skillCooldown','actionStart','blockingUntil','kickoffRole','kickStart','jukeWX','jukeWZ','bigHitUntil','bigHitConnected','hitRecoverUntil','impactStart','impactVX','impactVZ','impactStrength','impactBack','hitReactUntil','stumbleStart','stumbleUntil','stumbleSide'])if(p[k]!==undefined)out[k]=p[k];return out}),timeouts:teamTimeouts,clockRunning:gameClockRunning,timeoutActive:timeoutInEffect,venue:homeVenue,offenseTeam,phase:gamePhase,clock:playClock,time:liveTime,quarter:quarterNumber,seconds:quarterSeconds,scores:[homeScore,awayScore],los:lineOfScrimmage,first:firstDownZ,down:downNumber,carrier:carrier?{team:carrier.team,number:carrier.number}:null,ball:gameBall,flight,loose:looseBall,kickoff:kickoffActive,punt:puntActive,kickMeter,extra:extraPending,pendingKickTeam,two:twoPointAttempt,over:gameOver,offense:selectedOffense.id,defense:selectedDefense.id,choosing:networkChoosing,notice:qbEl('playNotice').textContent,result:{visible:!qbEl('downResult').classList.contains('hidden'),title:qbEl('resultTitle').textContent,detail:qbEl('resultDetail').textContent}});
 }
 function applyQuarterbackSnapshot(m){
  if(appPhase!=='game'||!Array.isArray(m.players)||m.players.length!==22)return;
@@ -1432,9 +1454,9 @@ function initializeProUI(){
  menu.insertBefore(mode,teamGrid);qbEl('qbTeamChooser').append(oldLabel,teamGrid);mode.append(qbEl('qbSoloPanel'),qbEl('qbOnlinePanel'));qbEl('qbChooseTeam').onclick=()=>qbEl('qbTeamChooser').classList.toggle('hidden');back.onclick=showModeRoot;
  document.querySelectorAll('.qbTeam').forEach(b=>b.querySelector('.qbCrest').innerHTML=teamLogoSVG(b.dataset.team));
  let ribbon=document.createElement('section');ribbon.id='proScoreRibbon';ribbon.setAttribute('aria-label','Match scoreboard');document.body.append(ribbon);
- let dock=document.createElement('div');dock.id='proActionDock';dock.innerHTML='<button id="proTackle">TACKLE<kbd>E</kbd></button><button id="proDive">DIVE<kbd>F</kbd></button><button id="proTruck">TRUCK<kbd>F</kbd></button><button id="proJukeL">JUKE LEFT<kbd>Q</kbd></button><button id="proJukeR">JUKE RIGHT<kbd>E</kbd></button><button id="proPassStyle">BULLET<kbd>V / RIGHT MOUSE</kbd></button>';
+ let dock=document.createElement('div');dock.id='proActionDock';dock.innerHTML='<button id="proTackle">TACKLE<kbd>E</kbd></button><button id="proDive">DIVE<kbd>F</kbd></button><button id="proBigHit" title="Wind up and drive through the runner. G. A missed hit needs recovery.">BIG HIT<kbd>G</kbd></button><button id="proTruck">TRUCK<kbd>F</kbd></button><button id="proJukeL">JUKE LEFT<kbd>Q</kbd></button><button id="proJukeR">JUKE RIGHT<kbd>E</kbd></button><button id="proPassStyle">BULLET<kbd>V / RIGHT MOUSE</kbd></button>';
  document.body.append(dock);dock.prepend(qbEl('snapBall'));dock.append(qbEl('catchBall'),qbEl('sprintButton'),qbEl('defenderPicker'));qbEl('catchBall').onclick=()=>performPlayerAction('jump');
- for(let [id,action] of [['proTackle','tackle'],['proDive','dive'],['proTruck','truck'],['proJukeL','jukeLeft'],['proJukeR','jukeRight']])qbEl(id).onclick=()=>performPlayerAction(action);
+ for(let [id,action] of [['proTackle','tackle'],['proDive','dive'],['proBigHit','bigHit'],['proTruck','truck'],['proJukeL','jukeLeft'],['proJukeR','jukeRight']])qbEl(id).onclick=()=>performPlayerAction(action);
  qbEl('proPassStyle').onclick=togglePassStyle;
  let cameras=document.createElement('div');cameras.id='proCameraControls';cameras.append(qbEl('playerCamera'),qbEl('inspectEquipment'));let stadiumButton=document.createElement('button');stadiumButton.textContent='Broadcast view';stadiumButton.onclick=()=>{if(view==='player')chooseView('formation');else playCamera()};cameras.append(stadiumButton);document.body.append(cameras);
  let meter=document.createElement('div');meter.id='proPassMeter';meter.className='hidden';meter.innerHTML='<div class="proPassHeading"><span id="proPassLabel">LOB</span><span id="proPassPower">0%</span></div><div class="proPassTrack" id="proThrowMeter" role="meter" aria-label="Throw charge: lob, touch, bullet" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="proPassFill"></i></div><div class="proPassBands"><span data-throw-band="lob">LOB</span><span data-throw-band="touch">TOUCH</span><span data-throw-band="bullet">BULLET</span></div><small>Hold left mouse · Longer hold = faster pass · Release to throw</small>';document.body.append(meter);
@@ -1479,12 +1501,12 @@ function updateProHud(now){
  let controlsKey=[defense,gamePhase,p?.number,carrier?.number,!!flight,!!throwHeld,timeoutInEffect,teamTimeouts[localTeam],quarterNumber,downNumber].join('|');
  if(!throwHeld&&controlsKey===proControlsKey&&now-proControlsUpdatedAt<50)return;
  proControlsKey=controlsKey;proControlsUpdatedAt=now;
- for(let id of ['proTackle','proDive']){qbEl(id).classList.toggle('hidden',!defense);qbEl(id).disabled=!live||(p?.skillCooldown||0)>liveTime}
+ for(let id of ['proTackle','proDive','proBigHit']){qbEl(id).classList.toggle('hidden',!defense);qbEl(id).disabled=!live||(p?.skillCooldown||0)>liveTime}
  for(let id of ['proTruck','proJukeL','proJukeR']){qbEl(id).classList.toggle('hidden',defense);qbEl(id).disabled=!live||!isRunner||(p?.skillCooldown||0)>liveTime}qbEl('proTruck').disabled=qbEl('proTruck').disabled||!['RB','FB','TE'].includes(p?.role);
  qbEl('proPassStyle').classList.toggle('hidden',defense);qbEl('proPassStyle').disabled=!throwing;
  qbEl('catchBall').classList.remove('hidden');qbEl('catchBall').disabled=!live||!flight;qbEl('catchBall').textContent='JUMP / CATCH · SPACE';
  qbEl('sprintButton').classList.toggle('active',!!sprintToggle||keys.has('ShiftLeft')||keys.has('ShiftRight'));
- qbEl('footballHelp').textContent=defense?'WASD move · Shift sprint · E tackle · F dive · Space contest · Q nearest defender':'WASD move · Shift sprint · Hold mouse to throw · Meter: lob / touch / bullet · F truck · Q/E juke';
+ qbEl('footballHelp').textContent=defense?'WASD move · Shift sprint · E tackle · F dive · G big hit · Space contest · Q nearest defender':'WASD move · Shift sprint · Hold mouse to throw · Meter: lob / touch / bullet · F truck · Q/E juke';
  qbEl('proPassMeter').classList.toggle('hidden',!throwing);let power=throwHeld?Math.min(1,(now-throwHeld)/1150):0;let meterKey=throwing+'|'+Math.round(power*100);if(meterKey!==proMeterCache){proMeterCache=meterKey;qbEl('proPassFill').style.width=power*100+'%';qbEl('proPassPower').textContent=Math.round(power*100)+'%';let meterType=passTypeForCharge(power);qbEl('proPassLabel').textContent=meterType.toUpperCase()+' PASS';qbEl('proPassFill').style.background=meterType==='lob'?'#83d2f2':meterType==='touch'?'#f1d486':'#f2a491';qbEl('proThrowMeter').setAttribute('aria-valuenow',String(Math.round(power*100)));qbEl('proThrowMeter').setAttribute('aria-valuetext',meterType+' pass · '+Math.round(power*100)+' percent');document.querySelectorAll('[data-throw-band]').forEach(b=>b.classList.toggle('active',b.dataset.throwBand===meterType));}
 
  { 
@@ -1530,7 +1552,7 @@ function fluidKeyBindings(e){
  if(e.code==='Space')action='jump';
  if(e.code==='KeyQ'){if(playSide==='defense'){switchDefender();e.preventDefault();e.stopImmediatePropagation();return}else action='jukeLeft'}
  if(e.code==='KeyE')action=playSide==='defense'?'tackle':'jukeRight';
- if(e.code==='KeyF')action=playSide==='defense'?'dive':'truck';
+ if(e.code==='KeyF')action=playSide==='defense'?'dive':'truck';if(e.code==='KeyG'&&playSide==='defense')action='bigHit';
  if((e.code==='KeyR'||e.code==='Tab')&&playSide==='defense'){switchDefender();e.preventDefault();e.stopImmediatePropagation();return}
  if(action){performPlayerAction(action);e.preventDefault();e.stopImmediatePropagation()}
 }
@@ -1544,20 +1566,21 @@ function performPlayerAction(action){
  performActionForPlayer(action,p);
 }
 function performActionForPlayer(action,p){
- let allowed=['tackle','dive','truck','jukeLeft','jukeRight','jump'];if(!allowed.includes(action)||gamePhase!=='live'||p.skillCooldown>liveTime)return;
+ let allowed=['tackle','dive','bigHit','truck','jukeLeft','jukeRight','jump'];if(!allowed.includes(action)||gamePhase!=='live'||p.skillCooldown>liveTime||p.stunnedUntil>liveTime)return;
  if(action==='jump'){
   if(!flight||liveTime-(p.jumpStart??-99)<1.1)return;p.jumpStart=liveTime;p.catchUntil=liveTime+.95;p.skillCooldown=liveTime+1.1;footballMessage('Jump ball · Reach through the catch!');return;
  }
- if(['tackle','dive'].includes(action)){
-  if(p.team!=='defense')return;let runner=carrier||formationPlayers.find(q=>q.team==='offense'&&q.role==='QB');if(!runner)return;
-  p.actionStart=liveTime;p.skillCooldown=liveTime+(action==='dive'?2.7:1.05);p.tackleUntil=liveTime+.45;
+ if(['tackle','dive','bigHit'].includes(action)){
+  if(p.team!=='defense'||action==='bigHit'&&(p.stamina??1)<.18)return;let runner=carrier||formationPlayers.find(q=>q.team==='offense'&&q.role==='QB');if(!runner)return;
+  p.actionStart=liveTime;p.skillCooldown=liveTime+(action==='dive'?2.7:action==='bigHit'?2.6:1.05);p.tackleUntil=liveTime+.45;
+  if(action==='bigHit'){if((p.stamina??1)<.18)return;let dx=runner.x-p.x,dz=runner.z-p.z,l=Math.hypot(dx,dz)||1,speed=Math.hypot(p.vx||0,p.vz||0);if(speed>1.5){dx=p.vx/speed;dz=p.vz/speed;l=1}p.bigHitVX=dx/l*7.2;p.bigHitVZ=dz/l*7.2;p.bigHitUntil=liveTime+.52;p.hitRecoverUntil=liveTime+.82;p.bigHitConnected=false;p.stamina=Math.max(0,(p.stamina??1)-.18);p.heading=Math.atan2(dx,dz)+Math.PI;footballMessage('BIG HIT · Drive through the runner!')}
   if(action==='dive'){let dx=runner.x-p.x,dz=runner.z-p.z,l=Math.hypot(dx,dz)||1;p.diveUntil=liveTime+.48;p.diveRecoverUntil=liveTime+1.1;p.diveVX=dx/l*8.0;p.diveVZ=dz/l*8.0;p.heading=Math.atan2(dx,dz)+Math.PI}
   if(carrier&&Math.hypot(p.x-carrier.x,p.z-carrier.z)<(action==='dive'?1.65:1.4))tryTackle(p,carrier);
   return;
  }
  if(p!==carrier||p.team!=='offense')return;
  if(action==='truck'){if(!['RB','FB','TE'].includes(p.role)||(p.stamina||0)<.15)return;p.truckUntil=liveTime+.65;p.actionStart=liveTime;p.skillCooldown=liveTime+2.1;p.stamina-=.14}
- else {if(!['WR','SL','RB','TE','FB'].includes(p.role)||(p.stamina||0)<.10)return;p.jukeUntil=liveTime+.50;p.jukeSide=(action==='jukeLeft'?-1:1)*-(p.team==='offense'?1:-1);p.actionStart=liveTime;p.skillCooldown=liveTime+1.3;p.stamina-=.10;p.tackleGrace=liveTime+.17}
+ else {if(!['WR','SL','RB','TE','FB'].includes(p.role)||(p.stamina||0)<.10)return;p.jukeUntil=liveTime+.50;p.jukeSide=(action==='jukeLeft'?-1:1)*-(p.team==='offense'?1:-1);p.actionStart=liveTime;p.skillCooldown=liveTime+1.3;p.stamina-=.10;let h=p.heading||0;p.jukeWX=Math.cos(h)*p.jukeSide;p.jukeWZ=-Math.sin(h)*p.jukeSide;p.jukeVictims=[]}
 }
 const priorRemotePlayer=remoteControlledPlayer;remoteControlledPlayer=function(){if(netMode&&netHost&&offenseTeam===lobby.guestTeam&&flight&&remoteReceiver!=null)return formationPlayers.find(p=>p.team==='offense'&&p.number===remoteReceiver)||priorRemotePlayer();return priorRemotePlayer()};
 const priorCommandHandler=handleRemoteCommand;handleRemoteCommand=function(m){
