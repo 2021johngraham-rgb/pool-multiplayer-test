@@ -39,10 +39,10 @@ if(aqu){
  // Low-poly reef and sea grass visible through the glass.
  for(let [x,z,w,h,col] of [[-.82,-1.42,.34,.13,'#526273'],[-.36,-1.18,.26,.18,'#344b61'],[.55,-1.46,.42,.12,'#46566a'],[.88,-.82,.25,.17,'#354c63'],[-.92,.15,.30,.15,'#526273'],[-.40,.52,.38,.12,'#3e5365'],[.42,.96,.34,.19,'#45576b'],[.86,1.42,.28,.12,'#344a60']])draw(cube,mm(mm(tr(x,.12,z),ry((x+z)*.7)),sc(w,h,.22)),col);
  for(let [x,z,ht] of [[-.72,-.72,.23],[-.28,.14,.30],[.63,.28,.25],[.76,1.14,.22]]){cylinderAt(cyl,x,.105+ht/2,z,.018,.018,ht,0,'#18766e');for(let q=0;q<3;q++)draw(cube,mm(mm(tr(x+(q-1)*.045,.16+q*.035,z),ry((q-1)*.38)),sc(.035,.12,.022)),'#24a77c')}
- fishShape(-.58,-.06,-1.20,'#f18a53',1,.12);
- fishShape(.42,-.045,-.48,'#ffd05a',-1,.105);
- fishShape(-.16,-.045,.44,'#44c9d4',1,.13);
- fishShape(.66,-.06,1.20,'#ef675d',-1,.12);
+ fishShape(-.58,.18,-1.20,'#f18a53',1,.12);
+ fishShape(.42,.18,-.48,'#ffd05a',-1,.105);
+ fishShape(-.16,.18,.44,'#44c9d4',1,.13);
+ fishShape(.66,.18,1.20,'#ef675d',-1,.12);
  // Cyan glass walls and bright edge reflections are translucent so the contents stay visible.
  for(let side of [-1,1]){draw(cube,mm(tr(side*1.145,.22,0),sc(.022,.30,3.62)),'#3caed4',.22);box(side*1.158,.22,0,.018,.31,3.66,'#168cc5');box(side*1.165,.22,-1.72,.012,.27,.012,'#a3efff');box(side*1.165,.22,1.72,.012,.27,.012,'#a3efff')}
  for(let end of [-1,1]){draw(cube,mm(tr(0,.22,end*1.815),sc(2.30,.30,.022)),'#3caed4',.22);box(0,.22,end*1.828,2.32,.31,.018,'#168cc5');box(-1.12,.22,end*1.837,.012,.27,.012,'#a3efff');box(1.12,.22,end*1.837,.012,.27,.012,'#a3efff')}
