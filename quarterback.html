@@ -88,7 +88,7 @@ body.appShell #proActionDock,body.appShell #proScoreRibbon,body.appShell #proPas
 <div id="qbSoloPanel"><p class="qbFine" id="qbSoloOpponent">Monarchs vs AI Sentinels · 4 × 2-minute quarters</p><button class="primary" id="qbSoloStart">Enter stadium →</button></div>
 <div id="qbOnlinePanel" class="hidden"><div class="qbRow"><button id="qbCreate" class="primary">Create room</button><input id="qbRoomInput" maxlength="5" placeholder="CODE" aria-label="Five-character room code" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="qbJoin">Join</button></div>
 <div id="qbRoomCode" aria-live="polite"></div><div class="qbRow"><button id="qbCopyCode" class="hidden">Copy code</button><button id="qbLeave" class="hidden">Leave room</button></div><p id="qbLobbyStatus" role="status">Create a room, then give your friend the five-character code. Both players choose a team in the lobby.</p><div id="qbRoster" class="qbRoster hidden"></div><div class="qbRow"><button id="qbReady" class="hidden">Ready</button><button id="qbOnlineStart" class="primary hidden" disabled>Start match →</button></div><p class="qbFine">Both players must open this same game page. Internet connection required. The host runs the match; room codes last until the host leaves.</p></div>
-<p class="qbFine">WASD move · Shift sprint · Mouse throw · Enter snap / kick<br>Defense: Tab switch player · Space attempt interception</p><button id="qbHub">Back to mini games</button></section></div><button id="qbMenuBack">Main menu</button><div id="qbConnectionStatus"></div><script async src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script><script>(()=>{
+<p class="qbFine">WASD move · Shift sprint · Mouse throw · Enter snap / kick<br>Defense: Tab switch player · Space attempt interception</p><button id="qbHub">Back to mini games</button></section></div><button id="qbMenuBack">Main menu</button><div id="qbConnectionStatus"></div><script src="game-audio.js?v=1"></script><script async src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script><script>(()=>{
 var gameClockRunning=false,teamTimeouts={home:3,away:3},timeoutInEffect=false;
 var homeVenue="home",receiverControl=null,remoteReceiver=null,passStyle="bullet",cameraSmooth=null;
 var localTeam="home",appPhase="loading",appStarted=performance.now(),entranceStarted=0,netPeer=null,netConn=null,netHost=false,netMode=false,remoteTeam="away",remoteKeys=new Set(),remoteNumber=54,networkChoosing=false,networkCalls={},lastNetInput=0,lastNetSnapshot=0,netDisconnected=false;
@@ -498,7 +498,7 @@ function prepareDown(){
 function footballMessage(message){document.querySelector('#playNotice').textContent=message}
 function snapFootball(){
  if(gamePhase==='punt-ready'){kickMeterTap();return}if(gamePhase==='extra-ready'){kickExtraPoint();return}if(gamePhase==='kickoff-ready'){startKickoff();return}if(pbDialog.open)return;if(gamePhase==='picking'&&!selectionPending)prepareDown();if(gamePhase!=='ready')return;
- gamePhase='live';gameClockRunning=!twoPointAttempt;timeoutInEffect=false;playClock=25;liveTime=0;physicsAccumulator=0;carrier=formationPlayers.find(p=>p.role==='QB');gameBall={x:carrier.x,y:1.1,z:carrier.z};
+ footballSound('hut');gamePhase='live';gameClockRunning=!twoPointAttempt;timeoutInEffect=false;playClock=25;liveTime=0;physicsAccumulator=0;carrier=formationPlayers.find(p=>p.role==='QB');gameBall={x:carrier.x,y:1.1,z:carrier.z};
  snapButton.disabled=true;document.querySelector('#playerSide').disabled=true;document.activeElement.blur();playCamera();simulationLast=performance.now();footballMessage(playSide==='offense'?(selectedOffense.kind==='Run'?'SNAP! Handoff incoming · WASD to run.':'SNAP! Receivers are running · Aim and click to throw.'):'SNAP! Cover your receiver or rush the quarterback.');updateFootballHUD();
 }
 
@@ -540,7 +540,7 @@ function tryTackle(tackler,runner){
  if(gamePhase!=='live'||tackler.stunnedUntil>liveTime||tackler.tackleCooldown>liveTime||runner.tackleGrace>liveTime)return;
  let dist=Math.hypot(tackler.x-runner.x,tackler.z-runner.z),manual=tackler.tackleUntil>liveTime||tackler.diveUntil>liveTime;
  if((tackler===controlled&&playSide==='defense'||netMode&&netHost&&tackler===remoteControlledPlayer())&&!manual&&dist>.65)return;
- tackler.tackleCooldown=liveTime+1.05;
+ tackler.tackleCooldown=liveTime+1.05;footballSound('hit',Math.min(1,.5+Math.hypot(runner.vx||0,runner.vz||0)/12));
  let speed=Math.hypot(runner.vx||0,runner.vz||0),dx=runner.x-tackler.x,dz=runner.z-tackler.z,l=Math.hypot(dx,dz)||1,truck=runner.truckUntil>liveTime;
  let chance=runner.role==='QB'?.04:Math.min(.34,.10+speed*.015+(runner.stamina||0)*.07+(runner.jukeUntil>liveTime?.28:0));
  if(truck)chance=.68;if(manual&&!truck)chance*=.72;
@@ -642,7 +642,7 @@ function continueAfterDown(){
 document.querySelector('#continueDown').onclick=continueAfterDown;
 function finishDown(message,turnover=false,incomplete=false){
  if(gamePhase!=='live'&&gamePhase!=='ready')return;
- if(twoPointAttempt){finishTwoPoint(message,incomplete,turnover);return}
+ footballSound('whistle');if(twoPointAttempt){finishTwoPoint(message,incomplete,turnover);return}
  let returning=kickoffActive,returningPunt=puntActive;puntActive=false;let endZ=carrier?carrier.z:lineOfScrimmage,start=lineOfScrimmage,gain=(endZ-start)/.9144;
  let touchdown=carrier&&!incomplete&&!turnover&&Math.abs(carrier.x)<24.384&&(carrier.team==='offense'?endZ+.22>=45.72:endZ-.22<=-45.72);
  gameClockRunning=!quarterExpired&&!touchdown&&!turnover&&!incomplete&&!twoPointAttempt&&!/out of bounds|safety|touchback|delay|kick short|recovered by the kicking/i.test(message);timeoutInEffect=false;
@@ -748,7 +748,7 @@ function blockAssignments(offense,defense,dt){
   if(gap<1.18&&p.blockCooldown<=liveTime&&d.blockCooldown<=liveTime&&!d.blockedBy){
    let dx=d.x-p.x,dz=d.z-p.z,l=Math.hypot(dx,dz)||1;
    p.blockNX=dx/l;p.blockNZ=dz/l;p.blockRelease=liveTime+Math.max(.65,1.8+p.blockStrength*2.3-d.rushStrength*1.8+Math.random()*.8);
-   d.blockedBy=p.number;p.blockingUntil=liveTime+.15;d.blockedUntil=liveTime+.15;
+   footballSound('block',.65);d.blockedBy=p.number;p.blockingUntil=liveTime+.15;d.blockedUntil=liveTime+.15;
   }
  }
  return assignments;
@@ -871,7 +871,7 @@ function stepFootball(dt){
   for(let receiver of eligiblePlayers())if(Math.hypot(receiver.x-gameBall.x,receiver.z-gameBall.z)<2.6&&flight.time/flight.duration>.60){receiver.catchUntil=liveTime+.25;if(gameBall.y>2.05&&liveTime-(receiver.jumpStart??-99)>1.3)receiver.jumpStart=liveTime}
   flight.time+=dt;let t=Math.min(1,flight.time/flight.duration);gameBall={x:flight.x0+(flight.x1-flight.x0)*t,z:flight.z0+(flight.z1-flight.z0)*t,y:1.35+Math.sin(t*Math.PI)*flight.arc};
   if(t>.60){let contenders=formationPlayers.filter(p=>p.role!=='QB'&&Math.hypot(p.x-gameBall.x,p.z-gameBall.z)<(p.catchUntil>liveTime?1.5:1.05)&&gameBall.y<1.95+playerJumpHeight(p)+(p.catchUntil>liveTime?.35:.1)).sort((a,b)=>Math.hypot(a.x-gameBall.x,a.z-gameBall.z)-Math.hypot(b.x-gameBall.x,b.z-gameBall.z));
-   for(let p of contenders){if(p.team==='defense'&&p.catchUntil<=liveTime)continue;if(p.team==='offense'&&!eligiblePlayers().includes(p))continue;carrier=p;flight=null;p.catchUntil=liveTime+.65;if(p.team==='offense'){if(playSide==='offense')controlled=p;footballMessage('Caught by #'+p.number+' · Run after the catch!')}else{footballMessage('INTERCEPTION · '+p.role+' #'+p.number);finishDown('Interception! Defense wins the down.',true)}break}
+   for(let p of contenders){if(p.team==='defense'&&p.catchUntil<=liveTime)continue;if(p.team==='offense'&&!eligiblePlayers().includes(p))continue;footballSound('catch',.8);carrier=p;flight=null;p.catchUntil=liveTime+.65;if(p.team==='offense'){if(playSide==='offense')controlled=p;footballMessage('Caught by #'+p.number+' · Run after the catch!')}else{footballMessage('INTERCEPTION · '+p.role+' #'+p.number);finishDown('Interception! Defense wins the down.',true)}break}
   }
   if(flight&&t>=1)finishDown('Incomplete pass',false,true);
  }else if(carrier){if(liveTime<.28&&carrier.role==='QB'){let t=liveTime/.28;gameBall={x:carrier.x*t,y:.22+.93*t,z:lineOfScrimmage+(carrier.z-lineOfScrimmage)*t}}else gameBall={x:carrier.x+.18,y:carrier.fallenAt>=0?.35:1.15,z:carrier.z+.22}}
@@ -1088,7 +1088,7 @@ function stepKickoff(dt){
  updateFootballHUD();
 }
 function receiveKickoff(returner){
- gameClockRunning=true;timeoutInEffect=false;carrier=returner;if(playSide==='offense')controlled=returner;returner.catchUntil=liveTime+.4;returner.tackleGrace=liveTime+.6;gamePhase='live';snapButton.textContent='Snap · Enter';footballMessage(playSide==='offense'?'Return the kickoff! WASD move · Shift sprint.':'AI is returning · Pursue with WASD and make the tackle!');
+ footballSound('catch',.8);gameClockRunning=true;timeoutInEffect=false;carrier=returner;if(playSide==='offense')controlled=returner;returner.catchUntil=liveTime+.4;returner.tackleGrace=liveTime+.6;gamePhase='live';snapButton.textContent='Snap · Enter';footballMessage(playSide==='offense'?'Return the kickoff! WASD move · Shift sprint.':'AI is returning · Pursue with WASD and make the tackle!');
 }
 
 const equipmentStage=(()=>{let b=builder();for(let i=0;i<80;i++){let a=i*Math.PI/40,c=(i+1)*Math.PI/40;quad(b,[0,-.008,0],[Math.cos(a)*1.2,-.008,Math.sin(a)*1.2],[Math.cos(c)*1.2,-.008,Math.sin(c)*1.2],[0,-.008,0],'#233c52');tube(b,[Math.cos(a)*1.18,0,Math.sin(a)*1.18],[Math.cos(c)*1.18,0,Math.sin(c)*1.18],.010,'#b69a68',8)}return upload(b)})();
@@ -1633,6 +1633,18 @@ const puntHudUpdate=updateProHud;updateProHud=function(now){
 const puntCommandHandler=handleRemoteCommand;handleRemoteCommand=function(m){
  if(m.action==='punt'){if(canChoosePunt(lobby.guestTeam))setupPunt(lobby.guestTeam);return}puntCommandHandler(m);
 };
+
+
+const footballAudio=new GameAudio('rock','quarterbackAudioV1');
+function footballSound(kind,strength=1){
+ if(netMode&&!netHost)return;
+ if(footballAudio.effect(kind,strength)&&netMode&&netHost)sendNet({type:'sound',kind,strength});
+}
+const audioReceiveQuarterback=receiveQuarterbackMessage;receiveQuarterbackMessage=function(m){
+ if(m?.type==='sound'){if(!netHost&&['hut','hit','block','catch','whistle'].includes(m.kind))footballAudio.effect(m.kind,Number.isFinite(m.strength)?m.strength:1);return}audioReceiveQuarterback(m);
+};
+const audioInitializeProUI=initializeProUI;initializeProUI=function(){audioInitializeProUI();let controls=footballAudio.mount(document.body);controls.id='qbAudioControls';controls.style.cssText='position:fixed;right:18px;bottom:18px;z-index:140';};
+const audioTimeout=callTeamTimeout;callTeamTimeout=function(team){let called=audioTimeout(team);if(called)footballSound('whistle');return called};
 
 updatePlaySummary();renderPlayCards();initializeQuarterbackApp();initializeProUI();
 
