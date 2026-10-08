@@ -12,7 +12,7 @@ class GameAudio{
   if(!this.ctx){let C=window.AudioContext||window.webkitAudioContext;if(!C)return;this.ctx=new C();this.master=this.ctx.createDynamicsCompressor();this.master.threshold.value=-12;this.master.knee.value=14;this.master.ratio.value=5;this.master.connect(this.ctx.destination);this.musicBus=this.ctx.createGain();this.fxBus=this.ctx.createGain();this.musicBus.connect(this.master);this.fxBus.connect(this.master);
    this.noise=this.ctx.createBuffer(1,this.ctx.sampleRate*2,this.ctx.sampleRate);let data=this.noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
    this.curve=new Float32Array(2048);for(let i=0;i<this.curve.length;i++){let x=i/1024-1;this.curve[i]=Math.tanh(x*7)*.65}
-   this.apply();this.started=true;this.next=this.ctx.currentTime+.08;this.timer=setInterval(()=>this.schedule(),120);
+   this.apply();this.started=true;this.next=this.ctx.currentTime+.08;this.prepareMusicLoop();
   }
   if(this.ctx.state==='suspended'&&!document.hidden)this.ctx.resume().catch(()=>{});
  }
@@ -29,6 +29,20 @@ class GameAudio{
  guitar(f,at,duration,level){
   let c=this.ctx,o=c.createOscillator(),second=c.createOscillator(),dist=c.createWaveShaper(),filter=c.createBiquadFilter(),g=c.createGain();o.type=second.type='sawtooth';o.frequency.value=f;second.frequency.value=f*1.003;dist.curve=this.curve;dist.oversample='2x';filter.type='lowpass';filter.frequency.setValueAtTime(2600,at);filter.frequency.exponentialRampToValueAtTime(650,at+duration);g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(level,at+.012);g.gain.exponentialRampToValueAtTime(.0001,at+duration);o.connect(dist);second.connect(dist);dist.connect(filter);filter.connect(g);g.connect(this.musicBus);o.start(at);second.start(at);o.stop(at+duration);second.stop(at+duration);o.onended=()=>{o.disconnect();second.disconnect();dist.disconnect();filter.disconnect();g.disconnect()};
  }
+
+ async prepareMusicLoop(){
+  if(this.preparing)return;this.preparing=true;
+  try{
+   let Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!Offline)return;
+   let beat=60/(this.style==='rock'?94:106),duration=beat*32,sampleRate=22050,offline=new Offline(2,Math.ceil(duration*sampleRate),sampleRate),composer=Object.create(GameAudio.prototype);
+   composer.ctx=offline;composer.style=this.style;composer.noise=this.noise;composer.curve=this.curve;composer.musicBus=offline.createGain();
+   let limit=offline.createDynamicsCompressor();limit.threshold.value=-14;limit.ratio.value=4;composer.musicBus.connect(limit);limit.connect(offline.destination);
+   for(let bar=0;bar<8;bar++){if(this.style==='rock')composer.rock(bar*beat*4,beat,bar);else composer.jazz(bar*beat*4,beat,bar);await new Promise(resolve=>setTimeout(resolve,0))}
+   let buffer=await offline.startRendering();if(!this.ctx)return;
+   this.loop=this.ctx.createBufferSource();this.loop.buffer=buffer;this.loop.loop=true;this.loop.connect(this.musicBus);this.loop.start();
+  }catch(error){console.warn('Instrumental loop unavailable',error)}
+ }
+
  schedule(){
   if(!this.ctx||this.ctx.state!=='running'||document.hidden)return;
   if(this.next<this.ctx.currentTime-.1)this.next=this.ctx.currentTime+.05;
