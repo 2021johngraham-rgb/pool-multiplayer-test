@@ -1,0 +1,14 @@
+{
+  "version": "cards-football-20261009",
+  "games": [
+    "pool",
+    "quarterback",
+    "cards"
+  ],
+  "cards": [
+    "holdem",
+    "blackjack"
+  ],
+  "phone": "portrait and landscape touch controls",
+  "rooms": "invite codes and public PeerJS discovery"
+}

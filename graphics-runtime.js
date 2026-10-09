@@ -69,3 +69,6 @@
   }
   window.GameSurface = { install, filter, setView, visible };
 })();
+
+/* Sharp surfaces within a phone-sized fill-rate budget. Keep the viewport's aspect. */
+window.GameDisplay={ratio(w,h){const phone=matchMedia('(pointer:coarse)').matches,dpr=Math.max(1,devicePixelRatio||1),cap=phone?Math.min(1080/Math.min(w,h),1920/Math.max(w,h)):Math.min(2,Math.sqrt(4147200/(w*h)));return Math.min(dpr,cap)},fov(degrees,aspect,max=96){return aspect<1?Math.min(max,2*Math.atan(Math.tan(degrees*Math.PI/360)/Math.max(.55,aspect))*180/Math.PI):degrees}};
