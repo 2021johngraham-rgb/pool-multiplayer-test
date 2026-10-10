@@ -1,18 +1,10 @@
 {
-  "version": "interface-career-20261010",
+  "version": "arcade-library-colors-20261010",
+  "previous": "interface-career-20261010",
   "games": [
     "pool",
     "quarterback",
     "cards"
   ],
-  "source": "Current local Game Room runtime",
-  "features": [
-    "Unified interface",
-    "Compact phone Cards HUD",
-    "Career save selection and locked body dimensions",
-    "Team ratings and playbooks",
-    "Updated passing and movement",
-    "Recorded grunge menu music"
-  ],
-  "files": 101
+  "change": "Restore original arcade palette in Mini Games menu only"
 }
