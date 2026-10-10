@@ -1,10 +1,1 @@
-{
-  "version": "arcade-library-colors-20261010",
-  "previous": "interface-career-20261010",
-  "games": [
-    "pool",
-    "quarterback",
-    "cards"
-  ],
-  "change": "Restore original arcade palette in Mini Games menu only"
-}
+{"version":"game-settings-scope-20261010","change":"Game-specific settings detection and preference isolation"}
