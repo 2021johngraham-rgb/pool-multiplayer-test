@@ -16,11 +16,12 @@ drawer.querySelector('[data-main]').onclick=()=>{close();window.HoldEmLobby.main
 drawer.querySelector('[data-room]').onclick=()=>document.getElementById('exitGame').click();
 document.addEventListener('keydown',e=>{if(e.code==='Escape')close()});
 document.addEventListener('pointerdown',e=>{if(!drawer.hidden&&!drawer.contains(e.target)&&!settings.contains(e.target))close()});
+function schedulePortrait(){if(document.hidden||portraitTimer||!portraitQueue.length)return;portraitTimer=window.requestIdleCallback?requestIdleCallback(renderNext,{timeout:1500}):setTimeout(renderNext,100)}
 function queuePortraits(){
  for(let i=0;i<4;i++){const look=HoldEmWardrobe.normalize(looks[i]),key=JSON.stringify(look);if(portraitKeys.get(i)===key)continue;portraitKeys.set(i,key);portraitQueue=portraitQueue.filter(p=>p.i!==i);portraitQueue.push({i,look,key})}
- if(!portraitTimer)portraitTimer=setTimeout(renderNext,50);
+ schedulePortrait();
 }
-function renderNext(){portraitTimer=null;if(!portraitQueue.length)return;const p=portraitQueue.shift();if(portraitKeys.get(p.i)===p.key){const url=window.HoldEmPortraits?.render(p.i,p.look);if(url){const img=panels[p.i].querySelector('img');img.src=url;img.hidden=false;panels[p.i].querySelector('.he-avatar-fallback').hidden=true}}if(portraitQueue.length)portraitTimer=setTimeout(renderNext,60)}
+function renderNext(){portraitTimer=null;if(document.hidden||!portraitQueue.length)return;const p=portraitQueue.shift();if(portraitKeys.get(p.i)===p.key){const url=window.HoldEmPortraits?.render(p.i,p.look);if(url){const img=panels[p.i].querySelector('img');img.src=url;img.hidden=false;panels[p.i].querySelector('.he-avatar-fallback').hidden=true}}schedulePortrait()}
 function update(s){
  snapshot=s;const self=window.TablePoker?.self??s.self,humans=s.mode==='online'?window.HoldEmRoom?.humanSeats()||[]:[self];
  const order=[self,(self+1)%4,(self+2)%4,(self+3)%4];
@@ -46,6 +47,7 @@ function clock(s,seconds){
 }
 window.addEventListener('holdem:cast-looks',e=>{looks=e.detail||{};queuePortraits()});
 window.addEventListener('holdem:room',()=>{if(window.HoldEmRoom?.ready){looks={...looks,...window.HoldEmRoom.botLooks};for(const [id,p]of Object.entries(window.HoldEmRoom.roster))looks[id]=p.look;queuePortraits()}});
-window.addEventListener('pagehide',()=>{clearTimeout(portraitTimer);portraitQueue=[]});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedulePortrait()});
+window.addEventListener('pagehide',()=>{if(window.cancelIdleCallback)cancelIdleCallback(portraitTimer);clearTimeout(portraitTimer);portraitTimer=null;portraitQueue=[]});
 window.HoldEmHud={update,clock,attachControls(controls){drawer.appendChild(controls)}};
 })();

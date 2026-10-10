@@ -1,0 +1,164 @@
+/* Compact phone presentation. Gameplay hit targets stay 44px; decoration does not. */
+.phone-tools-toggle{display:none}
+@media (pointer:coarse) and (max-width:1100px), (max-width:600px){
+ .studio-compact-controls:not(.phone-tools-open){display:none!important}
+ .phone-tools-toggle{position:fixed;display:grid;place-items:center;right:max(8px,env(safe-area-inset-right));top:112px;z-index:48;width:44px;height:44px;min-height:44px;padding:0;border:1px solid #adc7d344;border-radius:12px;background:#102633db;color:#edf4f1;font:22px system-ui;box-shadow:0 4px 14px #0004}
+ .phone-tools-toggle[aria-expanded=true]{background:#31505a;border-color:#e2c68c}
+ [data-studio-game=pool] body:not(.poolPlaying) .phone-tools-toggle,[data-studio-game=quarterback] body.appShell .phone-tools-toggle{display:none}
+ [data-studio-game=pool] .hudTools.phone-tools-open{display:grid!important;left:auto!important;right:max(8px,env(safe-area-inset-right))!important;top:162px!important;bottom:auto!important;width:min(228px,calc(100vw - 24px));max-width:none!important;padding:8px;gap:6px;z-index:47}
+ [data-studio-game=pool] .hudTools:before{display:none}
+ [data-studio-game=pool] .hudTools button{min-height:44px!important;font-size:10px!important}
+ [data-studio-game=pool] .brand{left:10px;top:max(9px,env(safe-area-inset-top));padding:0;background:none!important;max-width:36vw;font-size:6px}
+ [data-studio-game=pool] .brand b{font-size:17px}
+ [data-studio-game=pool] .stats{right:8px;top:max(8px,env(safe-area-inset-top));padding:7px 9px;min-width:0;width:59vw;max-width:240px;border-radius:10px}
+ [data-studio-game=pool] .trackerBall{width:16px;height:16px;font-size:7px}
+ [data-studio-game=pool] .trackerBalls{gap:3px}
+ [data-studio-game=pool] .trackerLabel{margin:5px 0 4px;font-size:7px}
+ [data-studio-game=pool] .matchDetails{font-size:7px}
+ [data-studio-game=pool] #mobilePowerControls{width:min(280px,calc(100vw - 24px));left:50%;right:auto;transform:translateX(-50%);padding:8px 10px;bottom:max(8px,env(safe-area-inset-bottom));border-radius:12px}
+ [data-studio-game=pool] .mobilePowerHeading{font-size:9px}
+ [data-studio-game=pool] #mobilePowerSlider{margin:11px 0 13px;height:6px}
+ [data-studio-game=pool] .mobilePowerActions{grid-template-columns:44px 1fr 44px;gap:7px}
+ [data-studio-game=pool] #mobilePowerControls button,[data-studio-game=pool] #mobilePowerControls #touchShoot{height:44px;min-height:44px;font-size:12px}
+ [data-studio-game=pool] #mobilePowerMinus,[data-studio-game=pool] #mobilePowerPlus{font-size:23px!important}
+ [data-studio-game=pool] #mobilePowerHint{font-size:8px;margin-top:5px}
+ [data-studio-game=pool] .mainMenuCard{padding:18px;max-width:350px;max-height:calc(100dvh - 24px);overflow:auto}
+ [data-studio-game=pool] .mainMenuCard h1{font-size:34px}
+ [data-studio-game=quarterback] #proScoreRibbon{grid-template-columns:minmax(92px,1fr) 75px minmax(92px,1fr);width:min(360px,calc(100vw - 16px));top:max(7px,env(safe-area-inset-top));border-radius:9px}
+ [data-studio-game=quarterback] .proTeamScore{grid-template-columns:24px 1fr 24px;gap:3px;padding:5px}
+ [data-studio-game=quarterback] .proTeamScore svg{width:24px;height:24px}
+ [data-studio-game=quarterback] .proTeamScore .proTeamName{font-size:8px}
+ [data-studio-game=quarterback] .proTeamScore .proTeamVenue{display:none}
+ [data-studio-game=quarterback] .proTeamScore .proTeamPoints{font-size:20px}
+ [data-studio-game=quarterback] .proCenterScore{font-size:12px;padding:5px}
+ [data-studio-game=quarterback] .proCenterScore small{font-size:8px}
+ [data-studio-game=quarterback] #playNotice{top:67px;font-size:10px;max-width:calc(100vw - 28px);line-height:1.35}
+ [data-studio-game=quarterback] .gameHelp{display:none!important}
+ [data-studio-game=quarterback] #proActionDock{left:auto!important;right:max(8px,env(safe-area-inset-right));transform:none!important;bottom:max(12px,env(safe-area-inset-bottom));width:192px!important;max-width:calc(100vw - 144px)!important;gap:4px;padding:5px!important;border-radius:12px!important}
+ [data-studio-game=quarterback] #proActionDock button{min-width:54px;min-height:44px!important;flex:1 1 54px;padding:6px 4px;font-size:9px}
+ [data-studio-game=quarterback] #proActionDock #sprintButton{display:none!important}
+ [data-studio-game=quarterback] body:not(.appShell):not(.inspecting) #footballThumb{width:100px;height:100px;left:max(12px,env(safe-area-inset-left));bottom:max(20px,env(safe-area-inset-bottom))}
+ [data-studio-game=quarterback] #footballThumb i{width:43px;height:43px}
+ [data-studio-game=quarterback] #proCameraControls.phone-tools-open{display:flex!important;right:8px;top:162px;bottom:auto;flex-direction:column;background:#102633f5;border:1px solid #a9c4d335;border-radius:12px;padding:7px;gap:5px;z-index:47}
+ [data-studio-game=quarterback] #proCameraControls button{min-height:44px;font-size:11px}
+ [data-studio-game=quarterback] #qbMenuBack{top:auto;bottom:calc(var(--qb-dock-height,100px) + 22px);right:8px;font-size:9px;min-height:36px;padding:7px 10px}
+ [data-studio-game=quarterback] #proPassMeter{width:160px!important;left:auto!important;right:12px!important;transform:none!important;bottom:calc(var(--qb-dock-height,100px) + 64px)!important;padding:8px}
+ [data-studio-game=pool] .hudTools #hudControlsToggle{display:none!important}
+ [data-studio-game=pool] .hudTools.phone-tools-open:not(.expanded) button:not(.hidden){display:block!important}
+ [data-studio-game=pool] .hudTools.phone-tools-open:not(.expanded) .volumeControl{display:flex!important}
+ [data-studio-game=pool] .hudTools.phone-tools-open #hudControlsToggle{display:none!important}
+ [data-studio-game=quarterback] #qbMenu{width:calc(100vw - 24px);padding:16px;max-height:calc(100dvh - 24px);margin:12px auto;box-sizing:border-box}
+ [data-studio-game=quarterback] .qbTitle{font-size:38px}
+ [data-studio-game=quarterback] #qbApp .qbTabs button{padding:15px 16px;font-size:15px}
+ [data-studio-game=quarterback] #qbSelectedTeam{gap:8px;margin:10px 0}
+ [data-studio-game=quarterback] #qbSelectedTeam .qbPortrait{height:140px}
+ [data-studio-game=quarterback] #qbSelectedTeam h3{font-size:20px}
+ [data-studio-game=quarterback] .matchupSide{padding:10px 7px}
+ [data-studio-game=cards] .table-live .he-player-panel[data-slot]{box-sizing:border-box;width:103px!important;min-height:45px!important;left:7px!important;top:calc(124px + var(--seat-index,0)*52px)!important;padding:6px 4px 5px 34px!important}
+ [data-studio-game=cards] .table-live .he-avatar{width:29px!important;height:29px!important;top:7px!important}
+ [data-studio-game=cards] .table-live .he-player-copy strong{font-size:12px!important}
+ [data-studio-game=cards] .table-live .he-player-copy b{font-size:9px!important}
+ [data-studio-game=cards] .table-live .wordmark{font-size:19px!important}
+ [data-studio-game=cards] .table-live .wordmark small{display:none}
+ [data-studio-game=cards] .table-live .he-table-stats{padding:7px 0;top:10px;right:57px}
+ [data-studio-game=cards] .table-live .he-table-stats>div{min-width:38px;padding:0 6px}
+ [data-studio-game=cards] .table-live .he-table-stats b{font-size:10px}
+ [data-studio-game=cards] .table-live .community-hud{top:62px!important;padding:5px 7px;max-width:calc(100vw - 20px)!important}
+ [data-studio-game=cards] .table-live .he-board-card{width:26px!important;height:36px!important}
+ [data-studio-game=cards] .table-live .he-board-card b{font-size:13px!important}
+ [data-studio-game=cards] .table-live .he-board-card span{font-size:15px!important}
+ [data-studio-game=cards] body.tableDesign.table-live .action-dock{left:8px!important;right:8px!important;width:auto!important;padding:7px 9px!important;border-radius:12px!important}
+ [data-studio-game=cards] .table-live .actions .action{min-height:44px!important;padding:6px!important;font-size:12px!important}
+ [data-studio-game=cards] .table-live .betting{gap:6px}
+ [data-studio-game=cards] .table-live .notice{font-size:10px;line-height:1.3;margin-bottom:5px}
+ [data-studio-game=cards] .table-live .presets{display:none}
+ [data-studio-game=cards] .table-live .he-bet-stepper{grid-column:1/-1;gap:5px}
+ [data-studio-game=cards] .table-live .he-bet-stepper>button{width:44px;min-height:44px}
+ [data-studio-game=cards] .table-live .raise-control>input{height:18px;min-height:18px}
+ [data-studio-game=cards] .table-live .cards-phone-controls{bottom:198px!important;right:8px;gap:4px}
+ [data-studio-game=cards] .blackjack-table .cards-phone-controls{bottom:160px!important}
+ [data-studio-game=cards] .he-main-content h1{font-size:54px;line-height:1}
+ [data-studio-game=cards] .he-main-content{margin:16px 0}
+ [data-studio-game=cards] .he-main-description{font-size:12px;margin-bottom:14px}
+ [data-studio-game=cards] .cards-game-picker{gap:7px;margin-bottom:14px}
+ [data-studio-game=cards] .cards-game-picker button{min-height:65px;padding:11px}
+ [data-studio-game=cards] .cards-game-picker b{font-size:21px}
+ [data-studio-game=cards] .he-main-play{min-height:46px}
+ .studio-dialog{padding:17px!important;width:calc(100vw - 24px);box-sizing:border-box}
+ .studio-dialog h2{font-size:27px}.studio-dialog fieldset{padding:12px 0}.studio-note{margin:10px 0 15px}
+}
+@media (orientation:landscape) and (max-height:560px){
+ .phone-tools-toggle{top:69px}
+ [data-studio-game=pool] .hudTools.phone-tools-open,[data-studio-game=quarterback] #proCameraControls.phone-tools-open{top:116px!important;max-height:calc(100dvh - 130px);overflow:auto}
+ [data-studio-game=pool] #mobilePowerControls{left:max(10px,env(safe-area-inset-left));right:auto;transform:none;width:225px;padding:7px 9px}
+ [data-studio-game=pool] #mobilePowerHint{display:none}
+ [data-studio-game=quarterback] body:not(.appShell):not(.inspecting) #footballThumb{width:92px;height:92px;bottom:max(12px,env(safe-area-inset-bottom))}
+ [data-studio-game=quarterback] #proActionDock{width:236px!important}
+ [data-studio-game=quarterback] #playNotice{top:56px;max-width:52vw}
+ [data-studio-game=cards] .table-live .he-player-panel[data-slot]{top:calc(63px + var(--seat-index,0)*47px)!important;min-height:42px!important}
+ [data-studio-game=cards] .table-live .community-hud{top:8px!important}
+ [data-studio-game=cards] body.tableDesign.table-live .action-dock{left:119px!important;right:8px!important;width:auto!important}
+ [data-studio-game=cards] .table-live .betting{flex-wrap:nowrap}
+ [data-studio-game=cards] .table-live .actions{flex:1 1 45%;min-width:0}
+ [data-studio-game=cards] .table-live .raise-control{width:44%;min-width:155px}
+ [data-studio-game=cards] .table-live .cards-phone-controls{bottom:114px!important}
+ [data-studio-game=cards] .blackjack-table .cards-phone-controls{bottom:130px!important}
+}
+
+/* Show only actions that apply to the current play on a phone. */
+.phone-context-hidden{display:none!important}
+[data-studio-game=quarterback] #proActionDock.phone-empty{display:none!important}
+@media (pointer:coarse) and (max-width:1100px), (max-width:600px){
+ [data-studio-game=quarterback] #proCameraControls #qbMenuBack,[data-studio-game=quarterback] #proCameraControls #qbAudioControls{position:static!important;inset:auto!important;transform:none!important;width:100%;max-width:none;margin:0}
+ [data-studio-game=quarterback] #proCameraControls #qbAudioControls>div{position:static;box-sizing:border-box;width:100%;margin-top:8px;padding:5px 0;border:0;box-shadow:none;background:none}
+ [data-studio-game=quarterback] #proCameraControls #qbAudioControls input{width:100%;min-width:0}
+ [data-studio-game=quarterback] #proCameraControls #qbAudioControls summary{min-height:28px;display:flex;align-items:center}
+ [data-studio-game=quarterback] #proCameraControls.phone-tools-open{max-height:calc(100dvh - 178px);overflow:auto;width:222px}
+ [data-studio-game=quarterback] #proPassMeter small{font-size:8px;line-height:1.4}
+ [data-studio-game=cards] .table-live .he-board-card i{font-size:15px!important}
+ [data-studio-game=cards] .table-live .bj-hand-summary{font-size:10px;padding:6px 8px}
+ [data-studio-game=cards] .table-live [data-bj-rules]{display:none}
+ .career-skins button{min-width:44px;min-height:44px}
+}
+@media (orientation:landscape) and (max-height:560px){
+ [data-studio-game=quarterback] #proCameraControls.phone-tools-open{max-height:calc(100dvh - 127px)}
+}
+/* Three compact calls stay visible in portrait, with diagrams beside the labels. */
+@media (max-width:600px) and (orientation:portrait){
+ [data-studio-game=quarterback] .playbook{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:14px}
+ [data-studio-game=quarterback] .pbHead{padding:11px 12px;gap:8px;flex-wrap:nowrap}
+ [data-studio-game=quarterback] .pbHead>div:first-child{min-width:0}
+ [data-studio-game=quarterback] .pbHead h2{font-size:22px;margin:4px 0}
+ [data-studio-game=quarterback] .pbHead small{font-size:7px;letter-spacing:.10em}
+ [data-studio-game=quarterback] .pbHead p{display:none}
+ [data-studio-game=quarterback] .playClockCapsule{width:61px;flex-shrink:0;padding:6px 4px}
+ [data-studio-game=quarterback] .playClockCapsule strong{font-size:23px}
+ [data-studio-game=quarterback] #closePlaybook{width:36px;min-width:36px;padding:0}
+ [data-studio-game=quarterback] .pbInfo{padding:8px 12px;gap:8px}
+ [data-studio-game=quarterback] .pbInfo>span{font-size:10px;line-height:1.5}
+ [data-studio-game=quarterback] .pbInfo button{min-width:110px;font-size:10px;padding:8px}
+ [data-studio-game=quarterback] .pbCards{display:grid;grid-template-columns:1fr;gap:8px;padding:0 10px 10px}
+ [data-studio-game=quarterback] .playCard{display:grid;grid-template-columns:104px minmax(0,1fr);grid-template-rows:auto auto;padding:5px;gap:0 5px;border-radius:11px;min-height:116px}
+ [data-studio-game=quarterback] .playCard svg{grid-column:1;grid-row:1 / span 2;align-self:center;width:104px;height:104px;min-height:0;padding:0;border-radius:7px}
+ [data-studio-game=quarterback] .playCardHead{grid-column:2;grid-row:1;align-self:end;min-height:0;border:0;padding:5px 2px;gap:7px;align-items:center}
+ [data-studio-game=quarterback] .playCardHead h3{font-size:14px;line-height:1.12;margin:0 0 4px}
+ [data-studio-game=quarterback] .playCardHead .cardFormation{font-size:8px}
+ [data-studio-game=quarterback] .playPickKey{width:27px;height:27px;font-size:16px;border-radius:50%}
+ [data-studio-game=quarterback] .playCardHead .cardBadge{display:none}
+ [data-studio-game=quarterback] .playCard .cardBody{grid-column:2;grid-row:2;padding:2px 3px 5px;align-self:start}
+ [data-studio-game=quarterback] .playCard .cardBody p{font-size:10px;line-height:1.35;min-height:0;margin:0 0 5px}
+ [data-studio-game=quarterback] .cardAction{font-size:8px;letter-spacing:0}
+ [data-studio-game=quarterback] .pbFoot{padding:8px 13px;min-height:0}
+ [data-studio-game=quarterback] .pbFine{display:none}
+ [data-studio-game=pool] .trackerLabel,[data-studio-game=pool] .matchDetails{font-size:8px}
+}
+@media (orientation:landscape) and (max-height:560px){
+ [data-studio-game=quarterback] .playCardHead{min-height:57px;padding:8px 9px 16px;gap:7px}
+ [data-studio-game=quarterback] .playCardHead h3{font-size:14px}
+ [data-studio-game=quarterback] .playCard svg{height:95px;min-height:0}
+ [data-studio-game=quarterback] .playCard .cardBody{padding:7px 10px}
+ [data-studio-game=quarterback] .pbHead{padding:8px 14px}
+ [data-studio-game=quarterback] .pbInfo{padding:6px 14px}
+ [data-studio-game=quarterback] .pbFoot{padding:7px 14px}
+ [data-studio-game=quarterback] .pbFine{display:none}
+}

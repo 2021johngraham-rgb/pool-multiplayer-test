@@ -11,21 +11,27 @@ function chips(value){
 function create(){
  let stacks=[2000,2000,2000,2000],pot=0,flights=[],previous=null,clock=0,sequence=0,revision=0,houseSettling=false;
  function fly(value,from,to,delay=0){let offset=0;for(const denomination of chips(value)){flights.push({id:++sequence,value:denomination,from,to,start:clock+delay+offset,duration:.72});offset+=.035}}
+ function settleFlights(){
+  // A newer snapshot can arrive before a queued payout has left the pot.
+  // Complete both ends exactly once; betting chips were removed on sync.
+  for(const f of flights){if(f.from==='pot'&&!f.departed)pot-=f.value;if(f.to==='pot')pot+=f.value;else stacks[f.to]+=f.value}
+  flights=[];pot=Math.max(0,pot);
+ }
  function sync(s){
   if(s.gameType==='blackjack'){
    if(previous&&s.session===previous.session&&s.hand===previous.hand&&s.phase===previous.phase&&s.players.every((p,i)=>p.stack===previous.players[i].stack)&&s.pot===previous.pot)return;
-   for(const f of flights){if(f.to==='pot')pot+=f.value;else stacks[f.to]+=f.value}flights=[];
-   if(!previous||s.session!==previous.session||s.hand!==previous.hand){stacks=s.players.map(p=>p.stack);pot=s.pot;houseSettling=false}
+   settleFlights();
+   if(!previous||s.session!==previous.session||s.hand!==previous.hand){stacks=s.players.map(p=>p.stack);pot=s.phase==='complete'?0:s.pot;houseSettling=false}
    else{const awards=s.phase==='complete'?s.payouts||[]:[];let incoming=0;s.players.forEach((p,i)=>{const before=p.stack-(awards.find(a=>a.id===i)?.amount||0),paid=Math.max(0,stacks[i]-before);stacks[i]=before;if(paid){incoming+=paid;fly(paid,i,'pot')}});if(s.phase==='complete'){houseSettling=true;const returns=awards.reduce((n,a)=>n+a.amount,0);pot=Math.max(0,returns-incoming);let delay=Math.max(.25,...flights.map(f=>f.start+f.duration-clock))+.25;for(const a of awards){fly(a.amount,'pot',a.id,delay);delay+=.12}if(!flights.length)pot=0}}
    previous=JSON.parse(JSON.stringify(s));revision++;return;
   }
   houseSettling=false;
 
   if(previous&&s.session===previous.session&&s.hand===previous.hand&&s.phase===previous.phase&&s.players.every((p,i)=>p.stack===previous.players[i].stack)&&s.pot===previous.pot)return;
-  if(!previous||s.hand!==previous.hand||s.session!==previous.session){flights=[];stacks=s.players.map(p=>p.stack);pot=s.pot;revision++}
+  if(!previous||s.hand!==previous.hand||s.session!==previous.session){flights=[];stacks=s.players.map(p=>p.stack);pot=s.phase==='complete'?0:s.pot;revision++}
   else{
    // Settle an earlier bet before a subsequent authoritative action arrives.
-   for(const f of flights){if(f.to==='pot')pot+=f.value;else stacks[f.to]+=f.value}flights=[];
+   settleFlights();
    const awards=s.phase==='complete'?(s.payouts||[]):[];
    const totals=stacks.map((v,i)=>s.players[i].stack-(awards.find(a=>a.id===i)?.amount||0));
    totals.forEach((v,i)=>{const bet=Math.max(0,stacks[i]-v);stacks[i]=v;if(bet)fly(bet,i,'pot')});

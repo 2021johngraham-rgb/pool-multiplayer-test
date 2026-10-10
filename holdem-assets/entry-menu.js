@@ -107,7 +107,7 @@ window.HoldEmEntry=function({cast=[],onEnter=()=>{},onPreview=()=>{},onBack=null
  }
  function selectCharacter(index){if(characterButtons[index].disabled)return;if(chosen!==index){chosen=index;update()}}
  function snapshot(){return {chosen,customizations:JSON.parse(JSON.stringify(customizations))}}
- function lookText(style){const clothes=style.costume&&style.costume!=='none'?label('costume',style.costume):[label('shirt',style.shirt),label('pants',style.pants)].join(' + ');return [clothes,style.hat&&style.hat!=='none'?label('hat',style.hat):'',label('facialHair',style.facialHair)].filter(Boolean).join(' · ')}
+ function lookText(style){const clothes=style.costume&&style.costume!=='none'?label('costume',style.costume):[label('shirt',style.shirt),label('pants',style.pants)].join(' + ');return [clothes,style.hat&&style.hat!=='none'?label('hat',style.hat):'',style.glasses&&style.glasses!=='none'?label('glasses',style.glasses):'',label('facialHair',style.facialHair)].filter(Boolean).join(' · ')}
  function update(preview=true){
   const c=roster[chosen],style=customizations[chosen];overlay.style.setProperty('--he-accent',c.accent);characterButtons.forEach((button,index)=>button.setAttribute('aria-pressed',String(index===chosen)));renderOptions();
   $('heCharacterName').textContent=c.name;$('heCharacterTag').textContent=c.tag;$('heCharacterBio').textContent=c.bio;$('hePortraitNumber').textContent=String(chosen+1).padStart(2,'0')+' / 04';
@@ -123,7 +123,7 @@ window.HoldEmEntry=function({cast=[],onEnter=()=>{},onPreview=()=>{},onBack=null
  function close(){open=false;overlay.hidden=true;document.body.classList.remove('holdem-entry-open');if(previousFocus?.isConnected)previousFocus.focus({preventScroll:true})}
  function show(){previousFocus=document.activeElement;open=true;overlay.hidden=false;document.body.classList.add('holdem-entry-open');update();requestAnimationFrame(()=>{if(open)characterButtons[chosen].focus({preventScroll:true})})}
  const entryError=document.createElement('p');entryError.className='he-entry-error';entryError.hidden=true;entryError.setAttribute('role','alert');$('heTakeSeat').parentElement.appendChild(entryError);
- $('heTakeSeat').addEventListener('click',async()=>{const config=snapshot(),button=$('heTakeSeat');button.disabled=true;button.textContent='Taking your seat…';entryError.hidden=true;try{await onEnter(config)}finally{button.disabled=false;button.textContent='Take your seat →'}});
+ $('heTakeSeat').addEventListener('click',async()=>{const config=snapshot(),button=$('heTakeSeat');button.disabled=true;button.textContent='Taking your seat…';entryError.hidden=true;try{await onEnter(config)}finally{button.disabled=false;button.textContent=window.HoldEmMatch?.public?'Ready up →':'Take your seat →'}});
  if(onBack)$('heEntryExit').innerHTML='<span aria-hidden="true">←</span> Main menu';
  $('heEntryExit').addEventListener('click',()=>{if(onBack){close();onBack()}else document.getElementById('exitGame')?.click()});
  overlay.addEventListener('keydown',event=>{if(event.key!=='Tab'||!open)return;const focusable=[...overlay.querySelectorAll('button:not([disabled]):not([tabindex="-1"]),[href],input:not([disabled]),select:not([disabled]),[tabindex="0"]')].filter(el=>el.getClientRects().length);if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}});

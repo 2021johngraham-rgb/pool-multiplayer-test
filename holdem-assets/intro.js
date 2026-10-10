@@ -3,7 +3,7 @@
 'use strict';
 window.HoldEmIntro=function({onComplete=()=>{}}={}){
  const duration=7.2,TAU=Math.PI*2,clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),ease=v=>{v=clamp(v);return v*v*(3-2*v)},out=v=>1-Math.pow(1-clamp(v),3);
- const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),gentle=()=>reduced.matches||window.GameStudio?.gentle;
  const overlay=document.createElement('section');overlay.className='he-cinematic';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Cards opening cinematic');
  overlay.innerHTML='<canvas aria-hidden="true"></canvas><div class="he-intro-presenter" aria-hidden="true">THE GAME ROOM PRESENTS</div><div class="he-intro-wordmark"><p class="he-intro-eyebrow">A SEAT FOR EVERY CHARACTER</p><h1>Cards<span>.</span></h1><div class="he-intro-suits" aria-hidden="true"><span>♠</span><span>♥</span><span>♣</span><span>♦</span></div></div><button class="he-intro-skip" type="button">Skip intro <span aria-hidden="true">Esc</span></button><div class="he-intro-progress" aria-hidden="true"></div>';
  document.body.appendChild(overlay);
@@ -94,10 +94,10 @@ window.HoldEmIntro=function({onComplete=()=>{}}={}){
   presenter.style.opacity=String(staticTitle?0:ease(t/.65)*(1-ease((t-4.7)/.5))*.72);
   progress.style.transform='scaleX('+clamp(t/(staticTitle?1.25:duration))+')';
  }
- function tick(stamp){frame=0;if(!running||destroyed||document.hidden)return;const dt=last?Math.min((stamp-last)/1000,.12):0;last=stamp;time+=dt;draw(time,reduced.matches);if(time>=(reduced.matches?1.25:duration)){finish();return}schedule()}
+ function tick(stamp){frame=0;if(!running||destroyed||document.hidden)return;const dt=last?Math.min((stamp-last)/1000,.12):0;last=stamp;time+=dt;draw(time,gentle());if(time>=(gentle()?1.25:duration)){finish();return}schedule()}
  function schedule(){if(running&&!destroyed&&!document.hidden&&!frame)frame=requestAnimationFrame(tick)}
  function finish(){if(!running||destroyed)return;running=false;cancelAnimationFrame(frame);frame=0;overlay.hidden=true;document.body.classList.remove('holdem-intro-playing');if(previousFocus?.isConnected)previousFocus.focus({preventScroll:true});onComplete()}
- function replay(){if(destroyed)return;cancelAnimationFrame(frame);frame=0;time=0;last=0;hasSize=false;previousFocus=document.activeElement;running=true;overlay.hidden=false;document.body.classList.add('holdem-intro-playing');draw(0,reduced.matches);skip.focus({preventScroll:true});schedule()}
+ function replay(){if(destroyed)return;cancelAnimationFrame(frame);frame=0;time=0;last=0;hasSize=false;previousFocus=document.activeElement;running=true;overlay.hidden=false;document.body.classList.add('holdem-intro-playing');draw(0,gentle());skip.focus({preventScroll:true});schedule()}
  function visibility(){last=0;if(document.hidden){cancelAnimationFrame(frame);frame=0}else schedule()}
  function keyboard(e){if(!running)return;if(e.key==='Escape'){e.preventDefault();finish()}else if(e.key==='Tab'){e.preventDefault();skip.focus({preventScroll:true})}}
  function onResize(){hasSize=false;schedule()}

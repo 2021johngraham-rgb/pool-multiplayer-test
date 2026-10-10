@@ -111,6 +111,34 @@ window.HoldEmAccessories=function(api,part){
   return;
  }
  if(part!=='head')return;
+ // Attached to the same head rig as the face, including look-around animation.
+ const glasses=c.glasses||'none';
+ if(glasses!=='none'){
+  const ex=big?.047:.042,ey=head+.034,z=round?.142:.139;
+  const color=glasses==='hearts'?[.95,.12,.35]:glasses==='spiral'?[.12,.78,.67]:glasses==='cat'?[.40,.025,.12]:['round','aviator','stars'].includes(glasses)?gold:ink;
+  metal(()=>{
+   for(const side of[-1,1]){
+    const cx=side*ex,points=[];
+    if(glasses==='square'||glasses==='pixel'){
+     for(const [x,y]of[[-1,-1],[1,-1],[1,1],[-1,1],[-1,-1]])points.push([cx+x*.037,ey+y*.028,z]);
+    }else if(glasses==='stars'){for(let j=0;j<=10;j++){const a=j*Math.PI/5+Math.PI/2,r=j%2?.023:.045;points.push([cx+Math.cos(a)*r,ey+Math.sin(a)*r,z]);}}else for(let i=0;i<=48;i++){
+     const t=i/48*Math.PI*2;let x,y;
+     if(glasses==='hearts'){x=Math.pow(Math.sin(t),3)*.040;y=(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))*.0026;}
+     else if(glasses==='stars'){const r=i%5<2?.044:.028;x=Math.cos(t)*r;y=Math.sin(t)*r;}
+     else{x=Math.cos(t)*.036;y=Math.sin(t)*.029;if(glasses==='cat')y+=Math.max(0,x*side)*.40;if(glasses==='aviator')y-=Math.max(0,-Math.sin(t))*.008;}
+     points.push([cx+x,ey+y,z]);
+    }
+    pipe(points,glasses==='round'?.0024:.0042,color);
+    pipe([[cx+side*.034,ey+.014,z],[side*(hw+.009),ey+.011,.070],[side*(hw+.010),ey-.014,.005]],.0032,color);
+    if(['aviator','pixel'].includes(glasses))rubber(()=>patch(points.slice(0,-1).map(p=>[p[0],p[1],p[2]-.002]),[.025,.07,.10]));
+    if(glasses==='spiral'){const spiral=[];for(let j=0;j<65;j++){const t=j/64*Math.PI*5,r=.030*j/64;spiral.push([cx+Math.cos(t)*r,ey+Math.sin(t)*r,z+.001])}pipe(spiral,.002,cream);}
+    if(glasses==='pixel')for(let j=0;j<3;j++)rubber(()=>patch([[cx-.026+j*.012,ey+.015,z+.002],[cx-.016+j*.012,ey+.015,z+.002],[cx-.016+j*.012,ey+.005,z+.002],[cx-.026+j*.012,ey+.005,z+.002]],white));
+   }
+   pipe([[-.011,ey+.007,z],[0,ey+.013,z+.006],[.011,ey+.007,z]],.003,color);
+   if(glasses==='aviator')pipe([[-ex,ey+.034,z],[ex,ey+.034,z]],.0025,gold);
+  });
+ }
+
 
  if(costume==='shark')cloth(()=>{
   hood(shark);hoodRim([.053,.21,.25],.006);

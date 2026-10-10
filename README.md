@@ -17,3 +17,6 @@ Private rooms use five-character invite codes. Public Find Game searches rooms f
 See audio/CREDITS.txt and audio/HOLDEM-AUDIO-LICENSE.txt for attribution and licensing. No personal voice recordings are shipped; dealer lines use browser speech synthesis.
 
 Release: cards-football-20261009.
+
+
+Current release: public-ready-20261009. Public games open lobbies with player readiness. QB Career includes high school, college and the draft.

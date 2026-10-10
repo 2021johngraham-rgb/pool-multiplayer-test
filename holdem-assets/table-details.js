@@ -90,7 +90,7 @@ window.HoldEmTableDetails=function(api){
   c.beginPath();c.roundRect(8,8,w-16,h-16,14);c.stroke();c.setLineDash([]);
   c.fillStyle='#305640';c.font='30px Georgia';c.textAlign='center';c.textBaseline='middle';c.fillText('♠',w/2,h/2);
  },128,192);
- for(let i=0;i<5;i++){const x=(i-2)*.183;panel([[x-.071,.7603,-.113],[x+.071,.7603,-.113],[x+.071,.7603,-.318],[x-.071,.7603,-.318]],[0,1,0],guide,[.65,.69,.52],{part:'poker-only'})}
+ for(let i=0;i<5;i++){const x=(i-2)*.183;panel([[x-.071,.7603,.007],[x+.071,.7603,.007],[x+.071,.7603,-.227],[x-.071,.7603,-.227]],[0,1,0],guide,[.65,.69,.52],{part:'poker-only'})}
 
  // A dealer's bank: a low, fitted tray with channels and individual edge spots.
  const trayX=-.34,trayZ=.68,tw=.43,td=.175;

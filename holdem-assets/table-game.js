@@ -53,6 +53,7 @@ function expireDecision(){
  if(game.phase==='complete')awardUntil=Date.now()+2700;publish();schedule();return true;
 }
 function tickClock(){
+ if(document.hidden)return;
  const s=clockSnapshot,deadline=remote?remoteDeadline:turnDeadline,remaining=deadline?Math.max(0,deadline-Date.now()):0;
  window.HoldEmHud?.clock(s,remaining/1000);
  const el=document.querySelector('[data-decision-clock]');

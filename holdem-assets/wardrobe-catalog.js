@@ -35,6 +35,17 @@ const categories=[
   option('traffic','Caution: Bluffing','#e88538','A miniature traffic cone with safety stripes.'),
   option('tophat','Ace of Hats','#454254','A tall silk top hat with a card tucked into its band.')
  ]},
+ {key:'glasses',label:'Glasses',options:[
+  option('none','No glasses','#77858a','Keep your face uncovered.'),
+  option('round','Book Club','#c4a36a','Fine round brass frames with open, clear lenses.'),
+  option('square','The Classic','#373d4b','Thick black square frames.'),
+  option('aviator','High Stakes','#ad976c','Gold aviators with dark blue lenses.'),
+  option('cat','Cat Eye','#a74064','Swept burgundy cat-eye frames.'),
+  option('stars','Star Struck','#e9bb39','Oversized gold star-shaped party glasses.'),
+  option('hearts','Love Blind','#ec548e','Big pink heart-shaped frames.'),
+  option('spiral','Hypno Hustler','#76d9cb','Turquoise frames with hypnotic spiral lenses.'),
+  option('pixel','Deal With It','#595583','Oversized pixel sunglasses with bright checker glints.')
+ ]},
  {key:'costume',label:'Costumes',options:[
   option('none','Mix & Match','#6a8781','Use your chosen shirt and pants.'),
   option('shark','Card Shark','#558ca4','A plush shark suit with a toothy open hood and fins.'),
@@ -57,7 +68,7 @@ const categories=[
   option('braided','Braided beard','#674830','A long woven chin beard finished with a gold cuff.')
  ]}
 ];
-const defaults={shirt:'signature',pants:'signature',hat:'none',costume:'none',facialHair:'signature'};
+const defaults={shirt:'signature',pants:'signature',hat:'none',glasses:'none',costume:'none',facialHair:'signature'};
 function normalize(value){
  const input=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
  const result={};

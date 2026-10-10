@@ -29,19 +29,36 @@ window.HoldEmCast=function(add,options={}){
  let ox=0,oz=0,angle=0,activeRig=null,activeMaterial=7,localPose=null,firstPersonSeat=null;
  function material(value,draw){const previous=activeMaterial;activeMaterial=value;draw();activeMaterial=previous}
  function batchFor(col){
-  const key=(activeRig?activeRig.actor+':'+activeRig.part+':'+(activeRig.side||0):'static')+':'+activeMaterial+':'+col.join(',');
+  const key=(activeRig?activeRig.actor+':'+activeRig.part+':'+(activeRig.side||0)+':'+(activeRig.grip||'arm'):'static')+':'+activeMaterial+':'+col.join(',');
   let batch=batches.get(key);if(!batch){batch={data:[],color:col,material:activeMaterial,rig:activeRig};batches.set(key,batch)}return batch.data;
  }
- function world(p){if(localPose){const q=localPose;p=[p[0],q[1]-(p[2]-q[2]),q[2]+(p[1]-q[1])]}const q=[ox+p[0]*Math.cos(angle)+p[2]*Math.sin(angle),p[1],oz-p[0]*Math.sin(angle)+p[2]*Math.cos(angle)];return firstPersonSeat?HoldEmSeating.fromDefault(q,firstPersonSeat):q}
- function normal(p){if(localPose)p=[p[0],-p[2],p[1]];const q=[p[0]*Math.cos(angle)+p[2]*Math.sin(angle),p[1],-p[0]*Math.sin(angle)+p[2]*Math.cos(angle)];return firstPersonSeat?HoldEmSeating.direction(firstPersonSeat,q):q}
+ // The Blender head replaces this exact procedural skin batch at flush time.
+ // Keep its batch marker, but do not construct triangles that would be discarded.
+ function sculptReplaces(col){
+  if(activeRig?.part!=='head'||activeMaterial!==7)return false;
+  const actor=actors[activeRig.actor],id=actor?.dealer?4:actor?.characterIndex;
+  if(!window.HoldEmFaceSculpt?.[id])return false;
+  const skin=id===4?[.81,.50,.31]:cast[id].skin;
+  if(col[0]!==skin[0]||col[1]!==skin[1]||col[2]!==skin[2])return false;
+  batchFor(col);return true;
+ }
+ let cachedAngle=NaN,angleCos=1,angleSin=0;function syncAngle(){if(angle!==cachedAngle){cachedAngle=angle;angleCos=Math.cos(angle);angleSin=Math.sin(angle)}}
+ function world(p){syncAngle();if(localPose){const q=localPose;p=[p[0],q[1]-(p[2]-q[2]),q[2]+(p[1]-q[1])]}const q=[ox+p[0]*angleCos+p[2]*angleSin,p[1],oz-p[0]*angleSin+p[2]*angleCos];return firstPersonSeat?HoldEmSeating.fromDefault(q,firstPersonSeat):q}
+ function normal(p){syncAngle();if(localPose)p=[p[0],-p[2],p[1]];const q=[p[0]*angleCos+p[2]*angleSin,p[1],-p[0]*angleSin+p[2]*angleCos];return firstPersonSeat?HoldEmSeating.direction(firstPersonSeat,q):q}
  function unit(v){let l=Math.hypot(...v)||1;return v.map(x=>x/l)}
  function power(v,e){return Math.sign(v)*Math.pow(Math.abs(v),e)}
  // Rounded superellipsoids give jaws and clipped hair deliberate, distinct silhouettes.
  function ell(p,s,col,axis=null,roundness=1){
+  if(sculptReplaces(col))return;
   const d=batchFor(col),y=axis?unit(axis):[0,1,0],x=unit(Math.abs(y[1])<.98?[y[2],0,-y[0]]:[1,0,0]),z=[x[1]*y[2]-x[2]*y[1],x[2]*y[0]-x[0]*y[2],x[0]*y[1]-x[1]*y[0]];
   const small=Math.max(...s)<.027||Math.min(s[0],s[2])<.016,lat=small?6:16,lon=small?10:24;
-  function emit(a,b){let q=[Math.sin(a)*Math.cos(b),Math.cos(a),Math.sin(a)*Math.sin(b)],v=p.map((t,i)=>t+x[i]*power(q[0],roundness)*s[0]+y[i]*power(q[1],roundness)*s[1]+z[i]*power(q[2],roundness)*s[2]),n=unit(p.map((_,i)=>x[i]*power(q[0],2-roundness)/s[0]+y[i]*power(q[1],2-roundness)/s[1]+z[i]*power(q[2],2-roundness)/s[2]));d.push(...world(v),...normal(n),0,0)}
-  for(let j=0;j<lat;j++)for(let i=0;i<lon;i++){let a=j*Math.PI/lat,A=(j+1)*Math.PI/lat,b=i*2*Math.PI/lon,B=(i+1)*2*Math.PI/lon;for(let [u,v]of[[a,b],[A,B],[A,b],[a,b],[a,B],[A,B]])emit(u,v)}
+  // Evaluate each shared vertex once; emit the same triangles at full detail.
+  const vertices=[];
+  for(let j=0;j<=lat;j++)for(let i=0;i<=lon;i++){
+   const a=j*Math.PI/lat,b=i*2*Math.PI/lon,q=[Math.sin(a)*Math.cos(b),Math.cos(a),Math.sin(a)*Math.sin(b)],v=p.map((t,k)=>t+x[k]*power(q[0],roundness)*s[0]+y[k]*power(q[1],roundness)*s[1]+z[k]*power(q[2],roundness)*s[2]),n=unit(p.map((_,k)=>x[k]*power(q[0],2-roundness)/s[0]+y[k]*power(q[1],2-roundness)/s[1]+z[k]*power(q[2],2-roundness)/s[2]));vertices.push([...world(v),...normal(n),0,0]);
+  }
+  for(let j=0;j<lat;j++)for(let i=0;i<lon;i++){const a=j*(lon+1)+i,b=a+lon+1;for(const k of[a,b+1,b,a,a+1,b+1])d.push(...vertices[k])}
+
  }
  function limb(a,b,r,col,depth=r){let v=b.map((n,i)=>n-a[i]);ell(a.map((n,i)=>(n+b[i])/2),[r,Math.hypot(...v)/2+r*.3,depth],col,v)}
  function strand(points,r,col){sleeve(points,points.map((_,i)=>Math.max(.001,r*(1-i/points.length))),col,.78)}
@@ -50,9 +67,14 @@ window.HoldEmCast=function(add,options={}){
  // One continuous surface per garment. Ring interpolation keeps the shoulders,
  // waist, elbows and cuffs connected instead of overlapping primitive beads.
  function surface(fn,col,rows=20,cols=24){
+  if(sculptReplaces(col))return;
   const d=batchFor(col),eps=.0001;
-  function emit(u,v){const p=fn(u,v),du=sub(fn(Math.min(1,u+eps),v),fn(Math.max(0,u-eps),v)),dv=sub(fn(u,v+eps),fn(u,v-eps));let n=unit(cross(du,dv));d.push(...world(p),...normal(n),v,u)}
-  for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){const a=j/rows,A=(j+1)/rows,b=i/cols,B=(i+1)/cols;for(const [u,v]of[[a,b],[A,b],[A,B],[a,b],[A,B],[a,B]])emit(u,v)}
+  const vertices=[];
+  for(let j=0;j<=rows;j++)for(let i=0;i<=cols;i++){
+   const u=j/rows,v=i/cols,p=fn(u,v),du=sub(fn(Math.min(1,u+eps),v),fn(Math.max(0,u-eps),v)),dv=sub(fn(u,v+eps),fn(u,v-eps)),n=unit(cross(du,dv));vertices.push([...world(p),...normal(n),v,u]);
+  }
+  for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){const a=j*(cols+1)+i,b=a+cols+1;for(const k of[a,b,b+1,a,b+1,a+1])d.push(...vertices[k])}
+
  }
  function interpolate(rings,u){
   let t=u*(rings.length-1),i=Math.min(rings.length-2,Math.floor(t)),f=t-i;
@@ -65,22 +87,25 @@ window.HoldEmCast=function(add,options={}){
   const thin=Math.max(...radii)<.008,profile=radii.map(r=>[r]);
   surface((u,v)=>{const p=interpolate(points,u),a=interpolate(points,Math.max(0,u-.002)),b=interpolate(points,Math.min(1,u+.002)),axis=unit(sub(b,a)),basis=unit(Math.abs(axis[1])<.9?cross(axis,[0,1,0]):cross(axis,[0,0,1])),other=cross(basis,axis),theta=v*2*Math.PI,crease=1+fold*.025*Math.sin(theta*3+u*19)*Math.pow(Math.sin(u*Math.PI),2),r=Math.max(.0005,interpolate(profile,u)[0])*crease;return p.map((n,k)=>n+basis[k]*Math.cos(theta)*r+other[k]*Math.sin(theta)*r*depth)},col,(points.length-1)*(thin?3:7),thin?8:16);
  }
- function patch(points,col){const d=batchFor(col);let n=unit(cross(sub(points[1],points[0]),sub(points[2],points[0]))),reverse=n[2]<0;if(reverse)n=n.map(v=>-v);for(let i=1;i<points.length-1;i++)for(const p of(reverse?[points[0],points[i+1],points[i]]:[points[0],points[i],points[i+1]]))d.push(...world(p),...normal(n),0,0)}
+ function patch(points,col){if(sculptReplaces(col))return;const d=batchFor(col);let n=unit(cross(sub(points[1],points[0]),sub(points[2],points[0]))),reverse=n[2]<0;if(reverse)n=n.map(v=>-v);for(let i=1;i<points.length-1;i++)for(const p of(reverse?[points[0],points[i+1],points[i]]:[points[0],points[i],points[i+1]]))d.push(...world(p),...normal(n),0,0)}
  function trim(points,r,col){sleeve(points,points.map(()=>r),col)}
+ // Smooth cartoon hands: continuous silhouettes without individual digits or nails.
+ function cardGrip(p,side,skin){
+  material(7,()=>ell(p,[.040,.046,.033],skin,null,.82));
+ }
+ function closedGrip(p,side,skin,size=1){
+  material(7,()=>ell(p,[.043*size,.032*size,.052*size],skin,null,.82));
+ }
+ function handVariants(p,side,skin,size=1,hang=false){
+  const rig=activeRig;
+  if(hang||!rig){hand(p,side,skin,size,hang);return;}
+  activeRig={...rig,grip:'open'};hand(p,side,skin,size,false);
+  activeRig={...rig,grip:'closed'};closedGrip(p,side,skin,size);
+  activeRig=rig;
+ }
  function hand(p,side,skin,size=1,hang=false){
   const previousPose=localPose;if(hang)localPose=p;
-  const [x,y,z]=p,shadow=skin.map(v=>v*.74);
-  material(7,()=>{
-   ell([x,y,z],[.048*size,.025*size,.067*size],skin,null,.75);
-   for(let f=0;f<4;f++){
-    const fx=x+(-.029+f*.019)*size,len=[.046,.062,.065,.053][f]*size;
-    sleeve([[fx,y-.004,z+.035*size],[fx+side*.002,y-.008,z+.068*size],[fx+side*.004,y-.013,z+.035*size+len]], [.009*size,.009*size,.0065*size],skin,.77);
-    ell([fx+side*.003,y-.006,z+.026*size+len],[.006*size,.0018,.010*size],skin.map(v=>Math.min(1,v*1.12)));
-    trim([[fx-.007*size,y-.001,z+.052*size],[fx+.006*size,y-.001,z+.052*size]],.0009,shadow);
-   }
-   sleeve([[x-side*.035*size,y,z-.015*size],[x-side*.065*size,y-.005,z+.018*size],[x-side*.067*size,y-.013,z+.046*size]],[.016*size,.014*size,.010*size],skin,.9);
-   trim([[x-side*.034*size,y+.016,z-.035*size],[x,y+.020,z-.030*size],[x+side*.034*size,y+.016,z-.035*size]],.001,shadow);
-  });
+  material(7,()=>ell(p,[.044*size,.025*size,.062*size],skin,null,.82));
   localPose=previousPose;
  }
  function person(c,x,z,yaw,dealer=false){
@@ -96,6 +121,7 @@ window.HoldEmCast=function(add,options={}){
   const hem=dealer?.965:standing?.93:.745,top=body+.25,darkCoat=coat.map(v=>v*.67),lightCoat=coat.map(v=>Math.min(.95,v*1.13+.025));
   material(9,()=>{
    const trouserColor=dealer?[.34,.029,.046]:(c.pantsColor||[.045,.055,.073]),shorts=!costumed&&c.pants==='shorts',sport=!costumed&&['joggers','neon'].includes(c.pants);
+   if(!options.headshot){
    if(standing)loft([[.79,.022*b,.019,0],[.825,.075*b,.046,.002],[.875,.14*b,.093*b,.003],[.965,.155*b,.105*b,.003]],trouserColor,.88,true);
    for(const side of [-1,1]){
     const straight=standing||dealer,trouser=trouserColor,hip=[side*.093*b,standing?.965:dealer?.99:.66,-.015],upper=[side*.112*b,straight?.79:.595,straight?.018:.13],knee=[side*.124*b,straight?.55:.465,straight?.025:.24],calf=[side*.125*b,straight?.31:.285,straight?.034:.27],ankle=[side*.125*b,.107,straight?.040:.28];
@@ -124,6 +150,7 @@ window.HoldEmCast=function(add,options={}){
      for(let j=0;j<4;j++)trim([[ankle[0]-.029,.149-j*.0012,ankle[2]-.008+j*.017],[ankle[0]+.029,.149-j*.0012,ankle[2]+.002+j*.017]],.0025,[.105,.11,.115]);
     }
    }
+   } // HUD portraits never show legs or shoes.
    const torsoRings=[[hem,.9*waist,.11*b,.02],[hem+.04,waist,.117*b,.015],[body-.07,round?.269:waist*.99,round?.205:.13*b,round?.027:.015],[body+.065,shoulder*.94,round?.176:.13*b,.015],[body+.17,shoulder,.115*b,.002],[top,shoulder*.64,.080,-.004],[top+.01,.053,.053,0]],torsoRound=big?.73:.90;
    loft(torsoRings,coat,torsoRound,true);
    // Clothing overlays share the actual torso surface. A small measured gap
@@ -159,7 +186,7 @@ window.HoldEmCast=function(add,options={}){
     for(let j=0;j<5;j++){const y=top-.102-j*.052;material(4,()=>ell([0,y,frontAt(y)+.006],[.005,.005,.003],dealer?gold:[.57,.51,.38]))}
    }
    for(const side of[-1,1]){
-    const shoulderP=[side*shoulder*.46,body+.146,-.004],elbow=standing?[side*(shoulder+.067),body-.075,.023]:[side*(dealer?.22:round?.335:big?.365:.285),body-.06,.105],wrist=standing?[side*(shoulder+.105),.965,.055]:[!dealer&&side===1?.135:side*.205*b,.853,dealer?.425:.352];
+    const shoulderP=[side*shoulder*.46,body+.146,-.004],elbow=standing?[side*(shoulder+.067),body-.075,.023]:[side*(dealer?.22:round?.335:big?.365:.285),body-.06,.105],wrist=standing?[side*(shoulder+.105),.965,.055]:[dealer?side*.205*b:options.gameType!=='blackjack'?side*.145:side*.19,dealer?.853:options.gameType!=='blackjack'?.837:.860,dealer?.425:options.gameType!=='blackjack'?.447:.352];
     activeRig={actor:actor.id,part:'arm',side,pivot:world(shoulderP),elbow:world(elbow),hand:world(standing?[wrist[0],wrist[1]-.045,wrist[2]]:[wrist[0],wrist[1]+.005,wrist[2]+.048])};
     const sleeveColor=dealer?white:(big&&c.outfit!=='casual'&&!costumed)?[.86,.82,.68]:coat,shortSleeve=!dealer&&!costumed&&['hawaiian','bowling','jersey'].includes(c.shirt);
     const armPoints=[shoulderP,[side*shoulder*.91,body+.145,-.001],[side*(shoulder+.035),body+.055,.021],elbow,standing?[wrist[0],wrist[1]+.04,wrist[2]-.005]:[wrist[0],wrist[1]+.003,wrist[2]-.03],wrist],armRadii=[.015,dealer?.063:big?.107:round?.101:.077,dealer?.061:big?.10:round?.098:.072,dealer?.051:big?.088:round?.075:.066,dealer?.038:big?.060:.048,dealer?.036:big?.058:.046];
@@ -167,7 +194,14 @@ window.HoldEmCast=function(add,options={}){
     // Forearm crease, elbow seam and cuff are wrapped around the actual arm.
     trim([[elbow[0]-side*.02,elbow[1]+.029,elbow[2]+.052],[elbow[0]-side*.006,elbow[1]+.028,elbow[2]+.066],[elbow[0]+side*.043,elbow[1]+.008,elbow[2]+.053]],.0024,sleeveColor.map(v=>v*.7));
     if(!shortSleeve){sleeve(standing?[[wrist[0],wrist[1]+.025,wrist[2]],[wrist[0],wrist[1]-.013,wrist[2]]]:[[wrist[0],wrist[1],wrist[2]-.038],[wrist[0],wrist[1],wrist[2]+.005]],[big?.063:dealer?.040:.049,big?.062:dealer?.041:.05],costumed?coat:c.outfit==='casual'?darkCoat:white,.85);material(4,()=>ell([wrist[0]-side*.032,wrist[1]+.026,wrist[2]-.012],[.006,.005,.006],gold))}
-    hand(standing?[wrist[0],wrist[1]-.045,wrist[2]]:[wrist[0],wrist[1]+.005,wrist[2]+.048],side,skin,big?1.17:dealer?.90:1,standing);
+    // Continuous wrist neck overlaps the cuff and palm; both follow one forearm rig.
+    const palmJoint=standing?[wrist[0],wrist[1]-.045,wrist[2]]:[wrist[0],wrist[1]+.005,wrist[2]+.048];
+    material(7,()=>sleeve([wrist,palmJoint],[dealer?.030:big?.039:.032,dealer?.030:big?.037:.031],skin,.90));
+    if(!standing&&!dealer&&options.gameType!=='blackjack'){
+     const handRig=activeRig,p=[wrist[0],wrist[1]+.005,wrist[2]+.048];
+     activeRig={...handRig,grip:'open'};cardGrip(p,side,skin);
+     activeRig={...handRig,grip:'closed'};closedGrip(p,side,skin);activeRig=handRig;
+    }else handVariants(standing?[wrist[0],wrist[1]-.045,wrist[2]]:[wrist[0],wrist[1]+.005,wrist[2]+.048],side,skin,big?1.17:dealer?.90:1,standing);
     if(slick&&side===-1&&!standing&&!costumed){
      material(2,()=>sleeve([[wrist[0],wrist[1],wrist[2]-.006],[wrist[0],wrist[1],wrist[2]+.021]],[.047,.047],[.036,.025,.021],.86));
      material(4,()=>ell([wrist[0],wrist[1]+.044,wrist[2]+.008],[.021,.006,.019],gold));
@@ -310,6 +344,7 @@ window.HoldEmCast=function(add,options={}){
     round?[[side*.013,head+.067,.115],[side*.046,head+.081,.112],[side*.082,head+.054,.090]]:
     dealer?[[side*.009,head+.070,.110],[side*.036,head+.089,.106],[side*.065,head+.064,.088]]:
     [[side*.012,head+.070,.110],[side*.038,head+.091,.108],[side*.078,head+.060,.089]];
+   activeRig={...headRig,part:'brows',side};
    material(10,()=>{
     strand(brow,big?.010:round?.009:slick?.0065:.008,hair);
     for(let j=0;j<(slick?5:9);j++){
@@ -317,6 +352,7 @@ window.HoldEmCast=function(add,options={}){
      strand([[p[0],p[1]-.004,p[2]+.002],[p[0]+side*.003,p[1]+(round?.003:.005),p[2]+.003]],.0014,hair.map(v=>v*1.30+.01));
     }
    });
+   activeRig=headRig;
    limb([side*.025,head-.004,eyeZ+.006],[side*.061,head-.008,eyeZ-.001],.0035,shadowSkin);
   }
   // A modeled bridge, bulb and nostrils replace the generic button noses.
@@ -453,14 +489,25 @@ window.HoldEmCast=function(add,options={}){
   const seats=options.seats||[[-1.72,-.38,.92],[1.04,-1.18,-.48],[1.76,-.29,-.96]];
   cast.map((c,i)=>({c:dressed(c,i),index:i})).filter(item=>item.index!==chosen||options.showSelf).forEach((item,i)=>person(item.c,...(options.playerSeats?.[item.index]||seats[i])));
   // First-person sleeves identify the selected avatar without obscuring cards.
-  if(!options.showSelf){ox=oz=angle=0;firstPersonSeat=options.playerSeats?.[chosen]||null;const me=dressed(cast[chosen],chosen),selfActor={id:actors.length,characterIndex:chosen,x:firstPersonSeat?.[0]||0,z:firstPersonSeat?.[1]||1.5,yaw:firstPersonSeat?.[2]||Math.PI,headY:1.38,self:true};selfActor.headPivot=HoldEmSeating.point(firstPersonSeat,0,-.37,1.26);selfActor.mouthAnchor=HoldEmSeating.point(firstPersonSeat,-.052,-.275,1.29);selfActor.mouthForward=HoldEmSeating.point(firstPersonSeat,-.35,.94,0).map((v,i)=>v-(i===0?firstPersonSeat[0]:i===2?firstPersonSeat[1]:0));actors.push(selfActor);for(let side of [-1,1]){
-   activeRig={actor:selfActor.id,part:'arm',side:-side,pivot:world([side*.34,.70,1.76]),elbow:world([side*.245,.79,1.56]),hand:world([side*.17,.85,1.37])};
+  if(!options.showSelf){ox=oz=angle=0;firstPersonSeat=options.playerSeats?.[chosen]||HoldEmSeating.seats[chosen];const me=dressed(cast[chosen],chosen),selfActor={id:actors.length,characterIndex:chosen,x:firstPersonSeat?.[0]||0,z:firstPersonSeat?.[1]||1.5,yaw:firstPersonSeat?.[2]||Math.PI,headY:1.38,self:true};selfActor.headPivot=HoldEmSeating.point(firstPersonSeat,0,-.37,1.26);selfActor.mouthAnchor=HoldEmSeating.point(firstPersonSeat,-.052,-.275,1.29);selfActor.mouthForward=HoldEmSeating.point(firstPersonSeat,-.35,.94,0).map((v,i)=>v-(i===0?firstPersonSeat[0]:i===2?firstPersonSeat[1]:0));actors.push(selfActor);for(let side of [-1,1]){
+   const raised=options.gameType!=='blackjack',wrist=raised?[side*.19,.89,1.17]:[side*.19,.860,1.148],palm=raised?[side*.158,.925,1.095]:[side*.19,.865,1.10];
+   activeRig={actor:selfActor.id,part:'arm',side:-side,pivot:world([side*.34,.70,1.76]),elbow:world([side*.245,.95,1.56]),hand:world(palm)};
    const bareForearm=me.costume==='none'&&['hawaiian','bowling','jersey'].includes(me.shirt);
-   if(bareForearm){material(9,()=>sleeve([[side*.34,.70,1.76],[side*.268,.775,1.60]],[.069,.065],me.coat));material(7,()=>sleeve([[side*.268,.775,1.60],[side*.22,.82,1.48],[side*.19,.84,1.41]],[.054,.049,.043],me.skin))}
-   else material(9,()=>sleeve([[side*.34,.70,1.76],[side*.245,.79,1.56],[side*.19,.84,1.41]],[.069,.062,.047],me.coat));
-   angle=Math.PI;hand([-side*.17,.85,-1.37],-side,me.skin);angle=0;
+   if(bareForearm){material(9,()=>sleeve([[side*.34,.70,1.76],[side*.268,.95,1.60]],[.069,.065],me.coat));material(7,()=>sleeve([[side*.268,.95,1.60],[side*.22,.93,1.35],wrist],[.054,.049,.043],me.skin))}
+   else material(9,()=>sleeve([[side*.34,.70,1.76],[side*.245,.95,1.56],wrist],[.069,.062,.047],me.coat));
+   material(7,()=>sleeve(raised?[wrist,[side*.18,.914,1.12],palm]:[wrist,palm],raised?[.035,.034,.032]:[.034,.032],me.skin));
+   const handRig=activeRig;activeRig={...handRig,grip:'open'};if(raised)cardGrip(palm,side,me.skin);else{angle=Math.PI;hand([-palm[0],palm[1],-palm[2]],-side,me.skin,1,false);angle=0;}activeRig={...handRig,grip:'closed'};angle=Math.PI;closedGrip([-palm[0],palm[1],-palm[2]],-side,me.skin);angle=0;activeRig=handRig;
   }
  }}
- for(const {data,color,material,rig} of batches.values())add(data,color,material,null,rig);
+ for(const batch of batches.values()){
+  let {data,color,material,rig}=batch;const actor=actors.find(a=>a.id===rig?.actor),id=actor?.dealer?4:actor?.characterIndex,sculpt=window.HoldEmFaceSculpt?.[id];
+  if(sculpt&&rig.part==='head'&&material===7&&color.every((v,k)=>v===(id===4?[.81,.50,.31]:cast[id].skin)[k])){
+   const c=Math.cos(actor.yaw),s=Math.sin(actor.yaw);data=[];
+   for(const i of sculpt.i){const k=i*3,x=sculpt.p[k]/100000,y=sculpt.p[k+1]/100000,z=sculpt.p[k+2]/100000,nx=sculpt.n[k]/32767,ny=sculpt.n[k+1]/32767,nz=sculpt.n[k+2]/32767;
+    data.push(actor.x+x*c+z*s,actor.headY+y,actor.z-x*s+z*c,nx*c+nz*s,ny,-nx*s+nz*c,0,0);
+   }
+  }
+  add(data,color,material,null,rig);
+ }
  return {cast,chosen,actors,previewBounds:options.mode==='portrait'?{height:2.65,width:1.15,centerY:1.20}:null};
 };

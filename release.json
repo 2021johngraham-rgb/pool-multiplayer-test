@@ -1,14 +1,10 @@
 {
-  "version": "cards-football-20261009",
+  "version": "public-ready-20261009",
   "games": [
     "pool",
     "quarterback",
     "cards"
   ],
-  "cards": [
-    "holdem",
-    "blackjack"
-  ],
-  "phone": "portrait and landscape touch controls",
-  "rooms": "invite codes and public PeerJS discovery"
+  "publicRooms": "Public lobbies with ready-up; private rooms retain invite codes",
+  "source": "Local Game Room runtime and assets"
 }

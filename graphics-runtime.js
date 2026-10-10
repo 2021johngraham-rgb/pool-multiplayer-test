@@ -71,4 +71,15 @@
 })();
 
 /* Sharp surfaces within a phone-sized fill-rate budget. Keep the viewport's aspect. */
-window.GameDisplay={ratio(w,h){const phone=matchMedia('(pointer:coarse)').matches,dpr=Math.max(1,devicePixelRatio||1),cap=phone?Math.min(1080/Math.min(w,h),1920/Math.max(w,h)):Math.min(2,Math.sqrt(4147200/(w*h)));return Math.min(dpr,cap)},fov(degrees,aspect,max=96){return aspect<1?Math.min(max,2*Math.atan(Math.tan(degrees*Math.PI/360)/Math.max(.55,aspect))*180/Math.PI):degrees}};
+const gameCoarsePointer=matchMedia('(pointer:coarse)');
+window.GameDisplay={ratio(w,h){const phone=gameCoarsePointer.matches,dpr=Math.max(1,devicePixelRatio||1),cap=phone?Math.min(1080/Math.min(w,h),1920/Math.max(w,h)):Math.min(2,Math.sqrt(4147200/(w*h)));return Math.min(dpr,cap)},fov(degrees,aspect,max=96){return aspect<1?Math.min(max,2*Math.atan(Math.tan(degrees*Math.PI/360)/Math.max(.55,aspect))*180/Math.PI):degrees}};
+
+/* Shift the projection, not the viewport: touch coordinates retain full-canvas precision. */
+(() => {
+ const touch=matchMedia('(pointer:coarse)');let mobile=false,portrait=false;
+ function measure(){mobile=touch.matches||innerWidth<=600;portrait=innerHeight>innerWidth}
+ measure();addEventListener('resize',measure,{passive:true});touch.addEventListener?.('change',measure);
+ GameDisplay.mobile=()=>mobile;
+ GameDisplay.cameraOffset=game=>!mobile||!['cards','pool','quarterback'].includes(game)?[0,0]:game==='cards'?[portrait?-.24:0,portrait?-.16:-.12]:game==='pool'?[0,portrait?-.08:-.12]:[0,portrait?-.09:-.14];
+ GameDisplay.frameProjection=(matrix,game)=>{const [x,y]=GameDisplay.cameraOffset(game);matrix[8]+=x;matrix[9]+=y;return matrix};
+})();

@@ -9,21 +9,48 @@ function transform(origin,destination,from,to,stretch=1){
  m[12]=destination[0]-(m[0]*origin[0]+m[4]*origin[1]+m[8]*origin[2]);m[13]=destination[1]-(m[1]*origin[0]+m[5]*origin[1]+m[9]*origin[2]);m[14]=destination[2]-(m[2]*origin[0]+m[6]*origin[1]+m[10]*origin[2]);return m;
 }
 function rest(seat,kind='cigar'){const p=S().point(S().seats[seat],kind==='cigar'?-.36:.36,.37,.873),angle=Math.atan2(p[2]/1.115,p[0]/1.81);return [1.81*Math.cos(angle),kind==='cigar'?.873:.876,1.115*Math.sin(angle)]}
-function armTo(rig,target){const P=rig.pivot,E=rig.elbow,H=rig.hand,a=Math.hypot(...sub(E,P)),b=Math.hypot(...sub(H,E)),d=Math.hypot(...sub(target,P)),stretch=Math.max(1,Math.min(1.45,d/(a+b-.004))),A=a*stretch,B=b*stretch,D=Math.max(.001,Math.min(d,A+B-.001)),axis=unit(sub(target,P));let bend=sub(sub(E,P),axis.map(v=>v*sub(E,P).reduce((n,x,k)=>n+x*axis[k],0)));if(Math.hypot(...bend)<.01)bend=cross(axis,[0,1,0]);bend=unit(bend);const along=Math.max(-1,Math.min(1,(A*A+D*D-B*B)/(2*A*D))),across=Math.sqrt(1-along*along),joint=P.map((v,k)=>v+axis[k]*A*along+bend[k]*A*across),end=P.map((v,k)=>v+axis[k]*D);return{upper:transform(P,P,sub(E,P),sub(joint,P),stretch),lower:transform(E,joint,sub(H,E),sub(end,joint),stretch),elbow:E,axis:unit(sub(H,E))}}
+function armTo(rig,target){
+ // Keep the hand volume clear of the felt and padded rim, before solving the elbow.
+ target=target.slice();const oval=Math.hypot(target[0]/1.79,target[2]/1.10);
+ if(oval<1.13)target[1]=Math.max(target[1],oval>.90?.907:.850);
+ const P=rig.pivot,E=rig.elbow,H=rig.hand,a=Math.hypot(...sub(E,P)),b=Math.hypot(...sub(H,E)),d=Math.hypot(...sub(target,P)),stretch=Math.max(1,Math.min(1.06,d/(a+b-.004))),A=a*stretch,B=b*stretch,D=Math.max(Math.abs(A-B)+.001,Math.min(d,A+B-.001)),axis=unit(d>.0001?sub(target,P):sub(H,P));let bend=sub(sub(E,P),axis.map(v=>v*sub(E,P).reduce((n,x,k)=>n+x*axis[k],0)));if(Math.hypot(...bend)<.01)bend=cross(axis,Math.abs(axis[1])>.95?[1,0,0]:[0,1,0]);bend=unit(bend);const along=Math.max(-1,Math.min(1,(A*A+D*D-B*B)/(2*A*D))),across=Math.sqrt(1-along*along),joint=P.map((v,k)=>v+axis[k]*A*along+bend[k]*A*across),end=P.map((v,k)=>v+axis[k]*D);
+ if(joint[1]<.94&&Math.hypot(joint[0]/1.93,joint[2]/1.25)<1.10){
+  const up=unit([0,1,0].map((v,k)=>v-axis[k]*axis[1]));
+  const safe=P.map((v,k)=>v+axis[k]*A*along+up[k]*A*across);
+  if(safe[1]>joint[1])for(let k=0;k<3;k++)joint[k]=safe[k];
+ }
+ return{upper:transform(P,P,sub(E,P),sub(joint,P),stretch),lower:transform(E,joint,sub(H,E),sub(end,joint),stretch),elbow:E,axis:unit(sub(H,E))}}
 function build(add){
  const centers=[];
  for(let seat=0;seat<4;seat++){
   const origin=S().seats[seat];let partName='cigar';const point=p=>{const q=S().point(origin,p[0],p[2],p[1]),cigar=['cigar','ember'].includes(partName),old=S().point(origin,cigar?-.40:.10,cigar?.65:.70,.785),next=rest(seat,cigar?'cigar':'lighter');return q.map((v,i)=>v+next[i]-old[i])};
-  function cylinder(a,b,r,color,part,mat=2){partName=part;const d=[],axis=unit(sub(b,a)),u=unit(cross(axis,Math.abs(axis[1])>.9?[1,0,0]:[0,1,0])),v=cross(axis,u);function vertex(p,n){d.push(...point(p),...S().direction(origin,[-n[0],n[1],-n[2]]),0,0)}for(let j=0;j<24;j++){const angle=j*Math.PI/12,next=(j+1)*Math.PI/12,n=t=>u.map((q,k)=>q*Math.cos(t)+v[k]*Math.sin(t)),p=(q,t)=>q.map((x,k)=>x+n(t)[k]*r),A=p(a,angle),B=p(a,next),C=p(b,next),D=p(b,angle);for(const [q,t]of[[A,angle],[B,next],[C,next],[A,angle],[C,next],[D,angle]])vertex(q,n(t));for(const q of[a,B,A])vertex(q,axis.map(x=>-x));for(const q of[b,D,C])vertex(q,axis)}add(d,color,mat,null,{part,seat})}
+  function cylinder(a,b,r,color,part,mat=2,endRadius=r){partName=part;const d=[],axis=unit(sub(b,a)),u=unit(cross(axis,Math.abs(axis[1])>.9?[1,0,0]:[0,1,0])),v=cross(axis,u);function vertex(p,n){d.push(...point(p),...S().direction(origin,[-n[0],n[1],-n[2]]),0,0)}for(let j=0;j<24;j++){const angle=j*Math.PI/12,next=(j+1)*Math.PI/12,n=t=>u.map((q,k)=>q*Math.cos(t)+v[k]*Math.sin(t)),p=(q,t)=>q.map((x,k)=>x+n(t)[k]*(q===b?endRadius:r)),A=p(a,angle),B=p(a,next),C=p(b,next),D=p(b,angle);for(const [q,t]of[[A,angle],[B,next],[C,next],[A,angle],[C,next],[D,angle]])vertex(q,n(t));for(const q of[a,B,A])vertex(q,axis.map(x=>-x));for(const q of[b,D,C])vertex(q,axis)}add(d,color,mat,null,{part,seat})}
   // The player's right is local -X; the lighter is on local +X.
   const center=[-.40,.785,.65];centers.push(rest(seat));
   cylinder([-.40,.785,.57],[-.40,.785,.73],.011,[.28,.12,.047],'cigar');
+  for(let j=0;j<11;j++){const z=.578+j*.012;cylinder([-.40,.785,z],[-.40,.785,z+.0013],.0112,[.35,.17,.070],'cigar');}
+  cylinder([-.40,.785,.617],[-.40,.785,.646],.0118,[.16,.024,.029],'cigar');
+  cylinder([-.40,.785,.618],[-.40,.785,.620],.0122,[.88,.64,.26],'cigar',4);
+  cylinder([-.40,.785,.644],[-.40,.785,.646],.0122,[.88,.64,.26],'cigar',4);
   cylinder([-.40,.785,.621],[-.40,.785,.642],.0116,[.75,.52,.16],'cigar',4);
   cylinder([-.40,.785,.719],[-.40,.785,.732],.0109,[.49,.46,.40],'cigar');
   cylinder([-.40,.785,.728],[-.40,.785,.735],.0085,[1,.21,.025],'ember',6);
   function box(c,size,color,part,mat){partName=part;const d=[],p=(x,y,z)=>point([c[0]+x*size[0]/2,c[1]+y*size[1]/2,c[2]+z*size[2]/2]);for(const [ids,n]of[[[[-1,1,1],[1,1,1],[1,1,-1],[-1,1,-1]],[0,1,0]],[[[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1]],[0,-1,0]],[[[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]],[0,0,1]],[[[1,-1,-1],[-1,-1,-1],[-1,1,-1],[1,1,-1]],[0,0,-1]],[[[1,-1,1],[1,-1,-1],[1,1,-1],[1,1,1]],[1,0,0]],[[[-1,-1,-1],[-1,-1,1],[-1,1,1],[-1,1,-1]],[-1,0,0]]])for(const i of[0,1,2,0,2,3])d.push(...p(...ids[i]),...S().direction(origin,[-n[0],n[1],-n[2]]),0,0);add(d,color,mat,null,{part,seat})}
   box([.10,.779,.70],[.045,.025,.064],[.65,.46,.19],'lighter',4);box([.10,.794,.724],[.046,.009,.018],[.23,.20,.16],'lighter',4);box([.10,.802,.69],[.025,.007,.012],[.052,.054,.05],'lighter',2);
-  cylinder([.10,.785,.735],[.10,.785,.762],.006,[1,.62,.11],'flame',6);
+  // Knurled striker, burner chimney and engraved lighter face.
+  cylinder([.088,.802,.715],[.112,.802,.715],.009,[.26,.29,.30],'lighter',4);
+  for(let j=0;j<6;j++){const x=.089+j*.004;cylinder([x,.802,.715],[x+.001,.802,.715],.0096,[.68,.70,.67],'lighter',4);}
+  box([.10,.796,.697],[.030,.008,.018],[.34,.37,.35],'lighter',4);
+  for(let j=0;j<3;j++)box([.089+j*.011,.801,.697],[.004,.002,.004],[.035,.04,.045],'lighter',2);
+  box([.10,.793,.677],[.025,.001,.025],[.16,.12,.07],'lighter',2);
+  box([.10,.794,.677],[.016,.001,.016],[.82,.62,.27],'lighter',4);
+  for(const x of[.079,.121])box([x,.793,.681],[.0015,.001,.042],[.89,.72,.37],'lighter',4);
+  // Layered tapered flame; its shared pose supplies the live flutter.
+  cylinder([.10,.785,.735],[.10,.785,.749],.0065,[.12,.42,1],'flame',6,.007);
+  cylinder([.10,.785,.745],[.10,.785,.765],.009,[1,.29,.025],'flame',6,.006);
+  cylinder([.10,.785,.763],[.10,.785,.778],.006,[1,.57,.045],'flame',6,.003);
+  cylinder([.10,.785,.778],[.10,.785,.790],.003,[1,.77,.24],'flame',6,.0004);
+  cylinder([.10,.786,.742],[.10,.786,.762],.0035,[1,.96,.65],'flame',6,.0005);
  }
  return centers;
 }
@@ -44,13 +71,25 @@ function create(){
   const tip=cigar.map((v,i)=>v+cigarDirection[i]*.085);
   const lightUp=smooth((t-3.4)/1.5),lightDown=smooth((t-6.4)/1.1),lightTarget=tip.map((v,i)=>v+(i===1?-.055:0)),lightPosition=mix(lighter,lightTarget,lightUp*(1-lightDown));
   if(['cigar','ember'].includes(rig.part))return transform(cigarRest,cigar,restDirection,cigarDirection);
-  if(['lighter','flame'].includes(rig.part))return transform(lighter,lightPosition,restDirection,unit(mix(restDirection,[0,1,0],lightUp*(1-lightDown))));
-  if(rig.part==='arm'&&(t<9||time>=s.returnAt&&time<s.returnAt+3.3)){const right=rig.side===-1,restHand=rig.hand,reach=time>=s.returnAt?(right?smooth((time-s.returnAt)/.8):0):right?smooth(t/.85):smooth((t-2.7)/.65),returning=time>=s.returnAt?smooth((time-s.returnAt-2.2)/.8):right?smooth((t-2.6)/1.2):lightDown;const target=mix(restHand,right?cigar:lightPosition,reach*(1-returning));const key=rig.actor+':'+rig.side;if(!armCache.has(key)){
+  if(['lighter','flame'].includes(rig.part)){
+   const up=unit(mix(restDirection,[0,1,0],lightUp*(1-lightDown)));
+   if(rig.part==='flame'){
+    const origin=lighter.map((v,i)=>v+restDirection[i]*.035),base=lightPosition.map((v,i)=>v+up[i]*.035),flutter=.91+.11*Math.sin(time*23)+.05*Math.sin(time*41),lean=unit(up.map((v,i)=>v+(i===0?Math.sin(time*17)*.11:i===2?Math.cos(time*13)*.07:0)));
+    return transform(origin,base,restDirection,lean,flutter);
+   }
+   return transform(lighter,lightPosition,restDirection,up);
+  }
+  if(rig.part==='arm'&&(t<9||time>=s.returnAt&&time<s.returnAt+3.3)){const right=rig.side===-1,restHand=rig.hand,reach=time>=s.returnAt?(right?smooth((time-s.returnAt)/.8):0):right?smooth(t/.85):smooth((t-2.7)/.65),returning=time>=s.returnAt?smooth((time-s.returnAt-2.2)/.8):right?smooth((t-2.6)/1.2):lightDown;const object=right?cigar:lightPosition,grasp=object.map((v,i)=>v+(i===1?.036:-restDirection[i]*.043)),target=mix(restHand,grasp,reach*(1-returning));const key=rig.actor+':'+rig.side;if(!armCache.has(key)){
  armCache.set(key,armTo(rig,target));
  }return armCache.get(key).upper}
   return null;
  }
- function visible(rig){if(rig?.part==='ember')return states[rig.seat].lit;if(rig?.part==='flame'){const t=time-states[rig.seat].start;return t>5.1&&t<6.4}return true}
+ function gripping(rig){
+  const seat=actors.find(a=>a.id===rig?.actor)?.characterIndex,s=states[seat];if(!s||s.start<0)return false;
+  const t=time-s.start,r=time-s.returnAt;
+  return rig.side===-1?(r>=0?r>.65&&r<2.1:t>.75&&t<2.85):(r<0&&t>3.25&&t<7.35);
+ }
+ function visible(rig){if(rig?.grip)return (rig.grip==='closed')===gripping(rig);if(rig?.part==='ember')return states[rig.seat].lit;if(rig?.part==='flame'){const t=time-states[rig.seat].start;return t>5.1&&t<6.4}return true}
  return {setHeads(states){headPoses=states;armCache.clear()},trigger,putDown,puff,cancel(seat){const state=states[seat];if(state){state.start=-100;state.returnAt=-100;state.lit=false}armCache.clear()},update,pose,visible,held(seat){const s=states[seat];return s&&s.start>=0&&time<s.returnAt+3.3},get particles(){return particles},arm(rig){if(rig?.part!=='arm')return null;pose(rig);return armCache.get(rig.actor+':'+rig.side)||null},get active(){return particles.length>0||states.some(s=>s.start>=0&&time<s.returnAt+3.3)},get states(){return states},get time(){return time},gaze(seat){if(!Number.isInteger(seat)||!states[seat])return null;const t=time-states[seat].start;return t>2.5&&t<4.2?rest(seat,'lighter'):t>=4.2&&t<6.4?S().point(S().seats[seat],-.10,.90,(actors.find(a=>a.characterIndex===seat)?.headY||1.5)-.03):null}};
 }
 window.HoldEmProps={build,create,transform,rest,armTo};

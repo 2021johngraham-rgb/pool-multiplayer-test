@@ -93,10 +93,10 @@ window.HoldEmCardArt=function(c,w,h,rank,suit){
  c.restore();return true;
 };
 window.HoldEmCardBack=function(c,w,h){
- c.save();c.scale(w/384,h/560);round(c,2,2,380,556,20,'#f1e7ca','#d6c9a9',2);
- round(c,17,17,350,526,12,'#214b58','#b69a5e',3);
+ const palette=({ruby:['#582c3d','#78394e','#3a192d','#58243b'],jade:['#245840','#34775b','#153b30','#235440']}[window.GameStudio?.get('cardBack')]||['#214b58','#315d68','#143742','#234b58']);c.save();c.scale(w/384,h/560);round(c,2,2,380,556,20,'#f1e7ca','#d6c9a9',2);
+ round(c,17,17,350,526,12,palette[0],'#b69a5e',3);
  c.save();c.beginPath();c.roundRect(25,25,334,510,8);c.clip();
- const grad=c.createLinearGradient(0,0,384,560);grad.addColorStop(0,'#315d68');grad.addColorStop(.5,'#143742');grad.addColorStop(1,'#234b58');c.fillStyle=grad;c.fillRect(25,25,334,510);
+ const grad=c.createLinearGradient(0,0,384,560);grad.addColorStop(0,palette[1]);grad.addColorStop(.5,palette[2]);grad.addColorStop(1,palette[3]);c.fillStyle=grad;c.fillRect(25,25,334,510);
  for(let y=-12;y<600;y+=23)for(let x=-12+(Math.round(y/23)%2)*11.5;x<410;x+=23){path(c,[[x,y-8],[x+8,y],[x,y+8],[x-8,y]],null,'#68818a',.7);ellipse(c,x,y,1.3,1.3,'#b6ad83')}
  c.restore();round(c,29,29,326,502,7,null,'#baa46c',1.5);round(c,39,39,306,482,7,null,'#baa46c',1);
  for(const flip of [false,true]){
