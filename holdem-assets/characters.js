@@ -26,7 +26,7 @@ window.HoldEmCast=function(add,options={}){
   return result;
  }
  const batches=new Map(),actors=[],white=[.95,.90,.80],ink=[.017,.022,.020],gold=[.70,.49,.19];
- let ox=0,oz=0,angle=0,activeRig=null,activeMaterial=7,localPose=null,firstPersonSeat=null;
+ let ox=0,oz=0,angle=0,activeRig=null,activeMaterial=7,localPose=null,firstPersonSeat=null,smoothCostume=false;
  function material(value,draw){const previous=activeMaterial;activeMaterial=value;draw();activeMaterial=previous}
  function batchFor(col){
   const key=(activeRig?activeRig.actor+':'+activeRig.part+':'+(activeRig.side||0)+':'+(activeRig.grip||'arm'):'static')+':'+activeMaterial+':'+col.join(',');
@@ -51,7 +51,7 @@ window.HoldEmCast=function(add,options={}){
  function ell(p,s,col,axis=null,roundness=1){
   if(sculptReplaces(col))return;
   const d=batchFor(col),y=axis?unit(axis):[0,1,0],x=unit(Math.abs(y[1])<.98?[y[2],0,-y[0]]:[1,0,0]),z=[x[1]*y[2]-x[2]*y[1],x[2]*y[0]-x[0]*y[2],x[0]*y[1]-x[1]*y[0]];
-  const small=Math.max(...s)<.027||Math.min(s[0],s[2])<.016,lat=small?6:16,lon=small?10:24;
+  const small=Math.max(...s)<.027||Math.min(s[0],s[2])<.016,soft=smoothCostume&&activeMaterial===9,lat=small?6:soft?22:16,lon=small?10:soft?32:24;
   // Evaluate each shared vertex once; emit the same triangles at full detail.
   const vertices=[];
   for(let j=0;j<=lat;j++)for(let i=0;i<=lon;i++){
@@ -81,11 +81,11 @@ window.HoldEmCast=function(add,options={}){
   const a=rings[Math.max(0,i-1)],b=rings[i],c=rings[i+1],d=rings[Math.min(rings.length-1,i+2)];
   return b.map((v,k)=>.5*((2*v)+(-a[k]+c[k])*f+(2*a[k]-5*v+4*c[k]-d[k])*f*f+(-a[k]+3*v-3*c[k]+d[k])*f*f*f));
  }
- function loft(rings,col,roundness=.85,cloth=false){surface((u,v)=>{let [y,w,depth,z,x=0]=interpolate(rings,u),a=v*Math.PI*2,ripple=cloth?1+(.009*Math.sin(a*7+u*21)+.005*Math.sin(a*11-u*13))*Math.sin(u*Math.PI):1;return [x+Math.max(.001,w)*power(Math.cos(a),roundness)*ripple,y,z+Math.max(.001,depth)*power(Math.sin(a),roundness)*ripple]},col,(rings.length-1)*3,28)}
+ function loft(rings,col,roundness=.85,cloth=false){surface((u,v)=>{let [y,w,depth,z,x=0]=interpolate(rings,u),a=v*Math.PI*2,ripple=cloth?1+(.009*Math.sin(a*7+u*21)+.005*Math.sin(a*11-u*13))*Math.sin(u*Math.PI):1;return [x+Math.max(.001,w)*power(Math.cos(a),roundness)*ripple,y,z+Math.max(.001,depth)*power(Math.sin(a),roundness)*ripple]},col,(rings.length-1)*(smoothCostume&&activeMaterial===9?5:3),smoothCostume&&activeMaterial===9?36:28)}
  function bib(rows,col,front=null){surface((u,v)=>{const [y,w,z]=interpolate(rows,u),x=(v*2-1)*w;return [x,y,front?front(y,x)+.007:z-.008*Math.pow(x/w,2)]},col,26,10)}
  function sleeve(points,radii,col,depth=1,fold=0){
   const thin=Math.max(...radii)<.008,profile=radii.map(r=>[r]);
-  surface((u,v)=>{const p=interpolate(points,u),a=interpolate(points,Math.max(0,u-.002)),b=interpolate(points,Math.min(1,u+.002)),axis=unit(sub(b,a)),basis=unit(Math.abs(axis[1])<.9?cross(axis,[0,1,0]):cross(axis,[0,0,1])),other=cross(basis,axis),theta=v*2*Math.PI,crease=1+fold*.025*Math.sin(theta*3+u*19)*Math.pow(Math.sin(u*Math.PI),2),r=Math.max(.0005,interpolate(profile,u)[0])*crease;return p.map((n,k)=>n+basis[k]*Math.cos(theta)*r+other[k]*Math.sin(theta)*r*depth)},col,(points.length-1)*(thin?3:7),thin?8:16);
+  surface((u,v)=>{const p=interpolate(points,u),a=interpolate(points,Math.max(0,u-.002)),b=interpolate(points,Math.min(1,u+.002)),axis=unit(sub(b,a)),basis=unit(Math.abs(axis[1])<.9?cross(axis,[0,1,0]):cross(axis,[0,0,1])),other=cross(basis,axis),theta=v*2*Math.PI,crease=1+fold*.025*Math.sin(theta*3+u*19)*Math.pow(Math.sin(u*Math.PI),2),r=Math.max(.0005,interpolate(profile,u)[0])*crease;return p.map((n,k)=>n+basis[k]*Math.cos(theta)*r+other[k]*Math.sin(theta)*r*depth)},col,(points.length-1)*(thin?3:smoothCostume&&activeMaterial===9?9:7),thin?8:smoothCostume&&activeMaterial===9?24:16);
  }
  function patch(points,col){if(sculptReplaces(col))return;const d=batchFor(col);let n=unit(cross(sub(points[1],points[0]),sub(points[2],points[0]))),reverse=n[2]<0;if(reverse)n=n.map(v=>-v);for(let i=1;i<points.length-1;i++)for(const p of(reverse?[points[0],points[i+1],points[i]]:[points[0],points[i],points[i+1]]))d.push(...world(p),...normal(n),0,0)}
  function trim(points,r,col){sleeve(points,points.map(()=>r),col)}
@@ -112,6 +112,7 @@ window.HoldEmCast=function(add,options={}){
   ox=x;oz=z;angle=yaw;activeRig=null;
   const b=c.build,skin=c.skin,hair=c.hair,coat=c.coat,big=c.style==='flat',round=c.style==='bald',slick=c.style==='swept';
   const standing=options.mode==='portrait'&&!dealer,costumed=!dealer&&c.costume&&c.costume!=='none';
+  smoothCostume=costumed;
   const head=(dealer?1.76:big?1.52:round?1.46:1.50)+(standing?.185:0),body=dealer?1.24:standing?1.20:1.015;
   const actor={id:actors.length,x,z,yaw,headY:head,dealer,standing,self:options.showSelf&&c.characterIndex===chosen,characterIndex:c.characterIndex};actors.push(actor);
   const rig={actor:actor.id,pivot:[x,head-.12,z],yaw,eyeY:head+.033,headY:head};
@@ -130,7 +131,7 @@ window.HoldEmCast=function(add,options={}){
      material(7,()=>sleeve([upper,knee,calf,ankle],[.075*b,big?.081:.065,.062,.043],skin,.93));
      const edge=[knee[0],knee[1]+.080,knee[2]-.025];sleeve([hip,upper,edge],[.093*b,.087*b,.084*b],trouser,1.06,1);
      sleeve([[edge[0],edge[1]+.012,edge[2]-.002],edge],[.087*b,.087*b],trouser.map(v=>v*.73),1.06);
-    }else sleeve(legPoints,legRadii,trouser,1.03,1);
+    }else sleeve(legPoints,legRadii,trouser,1.03,costumed?.35:1);
     if(!shorts)trim([[hip[0]+side*.062,hip[1],hip[2]],[knee[0]+side*.063,knee[1],knee[2]],[ankle[0]+side*.051,.15,ankle[2]]],.0028,trouser.map(v=>v*1.55));
     if(!costumed&&c.pants==='denim'){
      trim([[hip[0]-side*.025,hip[1]-.012,hip[2]+.069],[upper[0]-side*.035,upper[1]+.04,upper[2]+.074],[upper[0]+side*.021,upper[1]+.008,upper[2]+.073]],.0027,[.63,.45,.21]);
@@ -151,7 +152,7 @@ window.HoldEmCast=function(add,options={}){
     }
    }
    } // HUD portraits never show legs or shoes.
-   const torsoRings=[[hem,.9*waist,.11*b,.02],[hem+.04,waist,.117*b,.015],[body-.07,round?.269:waist*.99,round?.205:.13*b,round?.027:.015],[body+.065,shoulder*.94,round?.176:.13*b,.015],[body+.17,shoulder,.115*b,.002],[top,shoulder*.64,.080,-.004],[top+.01,.053,.053,0]],torsoRound=big?.73:.90;
+   const torsoRings=[[hem,.9*waist,.11*b,.02],[hem+.04,waist,.117*b,.015],[body-.07,round?.269:waist*.99,round?.205:.13*b,round?.027:.015],[body+.065,shoulder*.94,round?.176:.13*b,.015],[body+.17,shoulder,.115*b,.002],[top,shoulder*.64,.080,-.004],[top+.01,.053,.053,0]],torsoRound=costumed?.96:big?.73:.90;
    loft(torsoRings,coat,torsoRound,true);
    // Clothing overlays share the actual torso surface. A small measured gap
    // avoids intersections and jagged seams when the chest is seen obliquely.
@@ -190,7 +191,7 @@ window.HoldEmCast=function(add,options={}){
     activeRig={actor:actor.id,part:'arm',side,pivot:world(shoulderP),elbow:world(elbow),hand:world(standing?[wrist[0],wrist[1]-.045,wrist[2]]:[wrist[0],wrist[1]+.005,wrist[2]+.048])};
     const sleeveColor=dealer?white:(big&&c.outfit!=='casual'&&!costumed)?[.86,.82,.68]:coat,shortSleeve=!dealer&&!costumed&&['hawaiian','bowling','jersey'].includes(c.shirt);
     const armPoints=[shoulderP,[side*shoulder*.91,body+.145,-.001],[side*(shoulder+.035),body+.055,.021],elbow,standing?[wrist[0],wrist[1]+.04,wrist[2]-.005]:[wrist[0],wrist[1]+.003,wrist[2]-.03],wrist],armRadii=[.015,dealer?.063:big?.107:round?.101:.077,dealer?.061:big?.10:round?.098:.072,dealer?.051:big?.088:round?.075:.066,dealer?.038:big?.060:.048,dealer?.036:big?.058:.046];
-    if(shortSleeve){sleeve(armPoints.slice(0,4),armRadii.slice(0,4),sleeveColor,1,1);material(7,()=>sleeve([elbow,armPoints[4],wrist],[armRadii[3]*.88,armRadii[4]*.84,armRadii[5]*.88],skin))}else sleeve(armPoints,armRadii,sleeveColor,1,1);
+    if(shortSleeve){sleeve(armPoints.slice(0,4),armRadii.slice(0,4),sleeveColor,1,1);material(7,()=>sleeve([elbow,armPoints[4],wrist],[armRadii[3]*.88,armRadii[4]*.84,armRadii[5]*.88],skin))}else sleeve(armPoints,armRadii,sleeveColor,1,costumed?.35:1);
     // Forearm crease, elbow seam and cuff are wrapped around the actual arm.
     trim([[elbow[0]-side*.02,elbow[1]+.029,elbow[2]+.052],[elbow[0]-side*.006,elbow[1]+.028,elbow[2]+.066],[elbow[0]+side*.043,elbow[1]+.008,elbow[2]+.053]],.0024,sleeveColor.map(v=>v*.7));
     if(!shortSleeve){sleeve(standing?[[wrist[0],wrist[1]+.025,wrist[2]],[wrist[0],wrist[1]-.013,wrist[2]]]:[[wrist[0],wrist[1],wrist[2]-.038],[wrist[0],wrist[1],wrist[2]+.005]],[big?.063:dealer?.040:.049,big?.062:dealer?.041:.05],costumed?coat:c.outfit==='casual'?darkCoat:white,.85);material(4,()=>ell([wrist[0]-side*.032,wrist[1]+.026,wrist[2]-.012],[.006,.005,.006],gold))}

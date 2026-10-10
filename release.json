@@ -1,10 +1,18 @@
 {
-  "version": "atelier-mobile-20261009",
+  "version": "interface-career-20261010",
   "games": [
     "pool",
     "quarterback",
     "cards"
   ],
-  "publicRooms": "Public lobbies with ready-up; private rooms retain invite codes",
-  "source": "Local Game Room runtime and assets"
+  "source": "Current local Game Room runtime",
+  "features": [
+    "Unified interface",
+    "Compact phone Cards HUD",
+    "Career save selection and locked body dimensions",
+    "Team ratings and playbooks",
+    "Updated passing and movement",
+    "Recorded grunge menu music"
+  ],
+  "files": 101
 }

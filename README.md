@@ -20,3 +20,7 @@ Release: cards-football-20261009.
 
 
 Current release: public-ready-20261009. Public games open lobbies with player readiness. QB Career includes high school, college and the draft.
+
+
+## Current release: interface-career-20261010
+Synced with the local games. Includes interface.css, compact phone Cards controls, updated Quarterback career, ratings and team playbooks. Music credits: audio/MENU-MUSIC-LICENSE.txt.

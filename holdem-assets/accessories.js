@@ -10,17 +10,18 @@ window.HoldEmAccessories=function(api,part){
  const shark=[.15,.40,.49],dino=[.17,.42,.21],chicken=[.92,.84,.64],orange=[.93,.43,.07],suit=[.79,.85,.87];
  const front=round?.259:.14*b+.035;
  const cloth=fn=>material(9,fn),metal=fn=>material(4,fn),rubber=fn=>material(2,fn);
- function ball(p,s,color,shape=1){ell(p,s,color,null,shape)}
+ // Plush costume pieces use rounded profiles while hard accessories keep their edges.
+ function ball(p,s,color,shape=1){ell(p,s,color,null,costume!=='none'?Math.max(.78,shape):shape)}
  function pipe(points,r,color){trim(points,r,color)}
  function spike(a,mid,end,r,color){sleeve([a,mid,end],[r,r*.69,.0018],color,.80)}
  function star(x,y,z,size,color){const points=[];for(let j=0;j<10;j++){const a=j*Math.PI/5-Math.PI/2,r=j%2?size*.43:size;points.push([x+Math.cos(a)*r,y+Math.sin(a)*r,z])}patch(points,color)}
  function belly(color,depth=.025){ball([0,(hem+top)/2-.013,front],[waist*.83,(top-hem)*.435,depth],color,.88)}
  function hood(color){
   // A back shell and three framing pads leave the original face completely open.
-  ball([0,head+.040,-.090],[hw+.051,.221,.115],color,.85);
-  ball([0,head+.169,-.007],[hw+.052,.071,.137],color,.80);
-  for(const s of[-1,1])ball([s*(hw+.027),head-.010,.047],[.030,.168,.079],color,.82);
-  loft([[head-.194,.102,.073,.025],[head-.174,hw+.040,.116,.025],[head-.144,hw+.040,.107,.025]],color,.83);
+  ball([0,head+.040,-.090],[hw+.047,.213,.115],color,.97);
+  ball([0,head+.169,-.007],[hw+.050,.074,.137],color,.96);
+  for(const s of[-1,1])ball([s*(hw+.027),head-.010,.047],[.036,.163,.079],color,.96);
+  loft([[head-.194,.102,.073,.025],[head-.174,hw+.040,.116,.025],[head-.144,hw+.040,.107,.025]],color,.96);
  }
  function hoodRim(color,r=.004){
   pipe([[-hw-.008,head-.116,.112],[-hw-.029,head+.008,.119],[-hw-.006,head+.124,.118],[0,head+.147,.125],[hw+.006,head+.124,.118],[hw+.029,head+.008,.119],[hw+.008,head-.116,.112]],r,color);
@@ -32,7 +33,7 @@ window.HoldEmAccessories=function(api,part){
    pipe([[-waist*.54,hem+.066,front+.016],[0,hem+.047,front+.030],[waist*.54,hem+.066,front+.016]],.003,[.38,.61,.61]);
    for(const side of[-1,1]){
     // Fins are attached to the outer shoulders, leaving wrists and cards free.
-    sleeve([[side*(shoulder+.010),body+.15,-.032],[side*(shoulder+.145),body+.056,-.096],[side*(shoulder+.171),body-.108,-.068]],[.052,.048,.004],shark,.35);
+    sleeve([[side*(shoulder+.010),body+.15,-.032],[side*(shoulder+.145),body+.056,-.096],[side*(shoulder+.171),body-.108,-.068]],[.047,.040,.004],shark,.48);
     pipe([[side*(shoulder+.010),body+.15,-.006],[side*(shoulder+.132),body+.05,-.061],[side*(shoulder+.169),body-.106,-.068]],.003,[.35,.60,.62]);
     for(let j=0;j<3;j++)pipe([[side*waist*.65,top-.11-j*.035,front-.003],[side*waist*.82,top-.13-j*.035,front-.009]],.0035,[.053,.19,.235]);
    }
