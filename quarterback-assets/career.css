@@ -17,3 +17,6 @@
 #careerStudio.preview-full .career-card{background:none}#careerStudio.preview-full .career-preview-label{left:0;right:0}
 @media(max-width:700px) and (orientation:portrait){#careerStudio{background:linear-gradient(0deg,#07131d 35%,#07131d05 80%)}#careerStudio .career-card{margin-top:42vh;width:100%;padding:20px;min-height:58vh;background:#07131df5;border-radius:24px 24px 0 0}#careerStudio .career-preview-label{display:none}.career-save-grid{grid-template-columns:1fr;gap:10px}.career-save-tile>button:first-child{min-height:145px;gap:12px;padding:20px}.career-slot-picker{padding:24px 0}.career-start{min-height:85px}.career-start strong{font-size:24px}#careerStudio.preview-full .career-card{visibility:hidden}}
 @media(max-height:500px) and (orientation:landscape){#careerStudio .career-card{width:48vw;padding:18px 22px}.career-save-tile>button:first-child{min-height:150px;gap:12px;padding:18px}.career-opponent-logo svg{width:46px;height:46px}.career-start{min-height:80px}}
+
+/* Keep expanded development cards legible on phones. */
+.career-upgrades .career-stat-effect{display:block;max-width:28ch;white-space:normal;line-height:1.45;color:#c6d7e2;margin:5px 0}.career-upgrades article{min-width:0}.career-rating-summary{grid-template-columns:repeat(2,minmax(0,1fr))}

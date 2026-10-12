@@ -1,1 +1,17 @@
-{"version":"game-settings-scope-20261010","change":"Game-specific settings detection and preference isolation"}
+{
+  "version": "career-touchdown-20261011",
+  "games": [
+    "pool",
+    "quarterback",
+    "cards"
+  ],
+  "changes": [
+    "12 functional QB career attributes",
+    "QB jukes behind the line",
+    "More pass loft and hang time",
+    "Extra-point stance limit",
+    "Play-selection countdown",
+    "Startup repair",
+    "Touchdown intro cinematic"
+  ]
+}
